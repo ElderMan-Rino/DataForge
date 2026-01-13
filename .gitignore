@@ -1,0 +1,7 @@
+# Visual Studio 가 사용하는 임시/로컬 설정 폴더 제외
+.vs/
+[Obj]bj/
+[Bin]bin/
+*.user
+*.suo
+*.dtbcache.v2
