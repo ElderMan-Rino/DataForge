@@ -1,7 +1,18 @@
-# Visual Studio 가 사용하는 임시/로컬 설정 폴더 제외
+# Visual Studio 임시 폴더
 .vs/
-[Obj]bj/
-[Bin]bin/
+
+# 빌드 결과물 및 캐시
+[Bb]in/
+[Oo]bj/
+
+# 유니티 관련 임시 폴더 (유니티 프로젝트라면 추가)
+Library/
+Temp/
+Obj/
+Logs/
+MemoryCaptures/
+UserSettings/
+
+# 사용자 개인 설정
 *.user
 *.suo
-*.dtbcache.v2
