@@ -842,11 +842,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Programming\\DataForgeModule\\DataForge.csproj",
+      "projectUniqueName": "D:\\Programming\\DataForge\\DataForge.csproj",
       "projectName": "DataForge",
-      "projectPath": "D:\\Programming\\DataForgeModule\\DataForge.csproj",
+      "projectPath": "D:\\Programming\\DataForge\\DataForge.csproj",
       "packagesPath": "C:\\Users\\ovate\\.nuget\\packages\\",
-      "outputPath": "D:\\Programming\\DataForgeModule\\obj\\",
+      "outputPath": "D:\\Programming\\DataForge\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

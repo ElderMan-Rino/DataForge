@@ -16,10 +16,18 @@ namespace Elder.DataForge.Core.CodeGenerators.MemoryPack
 
     public class MemoryPackSourceGenerator : ISourceCodeGenerator
     {
-        private const string ClassPrefix = "MP";
-        private const string ClassSuffix = "Data";
+        private const string Prefix = "MsgP";
+        private const string DTOSuffix = "DTO";
+        private const string DODSuffix = "DOD";
+        // 여긴 나중에 에디터에서 네임스페이스를 저장할 수 있게 처리 
+        // 
         private const string TargetDataNamespace = "Elder.Game.Resource.Data";
         private const string TargetConverterNamespace = "Elder.Game.Resource.Data.Convert";
+
+        private string CreateStructName(string sheetName, string suffix)
+        {
+            return $"{Prefix}{sheetName}{suffix}"; 
+        }
 
         public async Task<List<GeneratedSourceCode>> GenerateAsync(Dictionary<string, DocumentContentData> documentContents)
         {
@@ -34,190 +42,130 @@ namespace Elder.DataForge.Core.CodeGenerators.MemoryPack
                 // 시트 단위로 순회 (시트 1개 = 클래스 1개 = 파일 2개)
                 foreach (var sheet in excelData.SheetDatas.Values)
                 {
-                    string className = $"{ClassPrefix}{sheet.SheetName}{ClassSuffix}";
-
-                    //// 1. [공용] 데이터 모델 파일 생성 (.cs)
-                    //// - MemoryPackable 속성 포함
-                    //// - 순수 데이터 프로퍼티만 포함
-                    //string modelContent = GenerateModelContent(className, sheet);
-                    //generatedFiles.Add(new GeneratedSourceCode($"{className}.cs", modelContent));
-                    
-                    //// 2. [툴 전용] 파서 로직 파일 생성 (.Parser.cs)
-                    //// - Parse 메서드 포함
-                    //// - 툴 프로젝트에만 포함시키고, 유니티에는 넣지 않음
-                    //string parserContent = GenerateParserContent(className, sheet);
-                    //generatedFiles.Add(new GeneratedSourceCode($"{className}.Parser.cs", parserContent));
+                    string dataName = CreateStructName(sheet.SheetName, DTOSuffix);
+                    string modelContent = GenerateModelContent(dataName, sheet);
+                    generatedFiles.Add(new GeneratedSourceCode($"{dataName}.cs", modelContent));
                 }
             }
 
             return await Task.FromResult(generatedFiles);
         }
 
-        private string GenerateModelContent(string className, ExcelSheetData sheetData)
+        private string GenerateModelContent(string dataName, in ExcelSheetData sheetData)
         {
             var sb = new StringBuilder();
 
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using MemoryPack;"); // MemoryPack 필수
+            sb.AppendLine("using MessagePack;"); // MessagePack 네임스페이스
             sb.AppendLine();
+
             sb.AppendLine($"namespace {TargetDataNamespace}");
             sb.AppendLine("{");
-            sb.AppendLine("\t[MemoryPackable]"); // 데이터 모델에만 붙입니다.
-            sb.AppendLine($"\tpublic partial class {className}");
+            sb.AppendLine("\t[MessagePackObject]");
+            sb.AppendLine($"\tpublic readonly struct {dataName}");
             sb.AppendLine("\t{");
 
-            // 필드 정의
-            var groupedFields = sheetData.FieldDefinitions.GroupBy(x => x.VariableName);
+            // 1. 엑셀 컬럼 순서대로 정렬된 리스트 (Serialization용)
+            var fieldGroups = sheetData.FieldDefinitions.GroupBy(x => x.VariableName)
+                .Select(group => new {
+                    Name = group.Key, 
+                    Fields = group.ToList(),
+                    // 이 그룹의 첫 번째 컬럼 번호를 '불변의 Key'로 사용 (하위 호환성)
+                    StableKeyIndex = group.Min(f => f.FieldOrder) - 1,
+                    // 그룹 내 모든 필드의 크기 합산 (예: int 3개면 4*3 = 12바이트)
+                    TotalSize = group.Sum(f => GetTypeSize(f.VariableType))
+                })
+                // 2. 메모리 레이아웃 최적화: 총 크기가 큰 그룹부터 정렬
+                .OrderByDescending(g => g.TotalSize)
+                // 3. 크기가 같다면 StableKeyIndex 순으로 정렬 (결과 일관성)
+                .ThenBy(g => g.StableKeyIndex)
+                .ToList();
 
-            foreach (var group in groupedFields)
+            // 4. 실제 코드 생성 로직
+            foreach (var group in fieldGroups)
             {
-                var fieldDef = group.First();
-                string fieldName = fieldDef.VariableName;
-                string csharpType = ConvertToCSharpType(fieldDef.VariableType, GenerationMode.SharedDTO);
+                // 정렬과 관계없이 [Key]는 엑셀의 원래 위치를 유지하여 하위 호환성 확보
+                sb.AppendLine($"\t\t[Key({group.StableKeyIndex})]");
 
-                if (group.Count() > 1)
+                string csharpType = ConvertToCSharpType(group.Fields[0].VariableType, GenerationMode.SharedDTO);
+
+                if (group.Fields.Count > 1)
                 {
-                    // [List]
-                    sb.AppendLine($"\t\tpublic List<{csharpType}> {fieldName} {{ get; set; }}");
+                    // List 타입인 경우 (DOD 모드라면 여기서 FixedList 등을 고려해야 함)
+                    sb.AppendLine($"\t\tpublic readonly List<{csharpType}> {group.Name}; // Size: {group.TotalSize}");
                 }
                 else
                 {
-                    // [Single]
-                    sb.AppendLine($"\t\tpublic {csharpType} {fieldName} {{ get; set; }}");
+                    // 단일 필드인 경우
+                    sb.AppendLine($"\t\tpublic readonly {csharpType} {group.Name}; // Size: {group.TotalSize}");
                 }
             }
 
-            sb.AppendLine("\t}");
-            sb.AppendLine("}");
-
-            return sb.ToString();
-        }
-
-        // ==================================================================================
-        // 2. 파서 로직 생성 로직 (Parser Generator)
-        // ==================================================================================
-        private string GenerateParserContent(string className, ExcelSheetData sheetData)
-        {
-            var sb = new StringBuilder();
-
-            sb.AppendLine("using System;");
-            sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using System.Linq;");
             sb.AppendLine();
-            sb.AppendLine($"namespace {TargetDataNamespace}");
-            sb.AppendLine("{");
-            // [MemoryPackable] 제거 (이미 Model 파일에 있음)
-            // partial class로 선언하여 Model 파일과 합쳐짐
-            sb.AppendLine($"\tpublic partial class {className}");
-            sb.AppendLine("\t{");
+            sb.AppendLine("\t\t[SerializationConstructor]");
+            sb.Append($"\t\tpublic {dataName}(");
+            for (int i = 0; i < fieldGroups.Count; i++)
+            {
+                var group = fieldGroups[i];
+                string csharpType = ConvertToCSharpType(group.Fields[0].VariableType, GenerationMode.SharedDTO);
+                string typeStr = group.Fields.Count > 1 ? $"List<{csharpType}>" : csharpType;
 
-            // Parse 메서드 생성
-            sb.AppendLine($"\t\tpublic static {className} Parse(List<string> rowData)");
+                string paramName = char.ToLower(group.Name[0]) + group.Name.Substring(1);
+
+                sb.Append($"{typeStr} {paramName}");
+                if (i < fieldGroups.Count - 1) 
+                    sb.Append(", "); // 마지막이 아니면 쉼표 추가
+            }
+            sb.AppendLine(")");
             sb.AppendLine("\t\t{");
-            sb.AppendLine($"\t\t\tvar instance = new {className}();");
-
-            var groupedFields = sheetData.FieldDefinitions.GroupBy(x => x.VariableName);
-
-            foreach (var group in groupedFields)
+            
+            foreach (var group in fieldGroups)
             {
-                var fieldDef = group.First();
-                string fieldName = fieldDef.VariableName;
-                string csharpType = ConvertToCSharpType(fieldDef.VariableType, GenerationMode.SharedDTO);
-
-                if (group.Count() > 1)
-                {
-                    // [List 파싱]
-                    sb.AppendLine($"\t\t\tinstance.{fieldName} = new List<{csharpType}>();");
-                    foreach (var colDef in group)
-                    {
-                        // 엑셀은 1부터 시작하므로 -1 하여 0-based index로 맞춤
-                        int colIndex = colDef.FieldOrder - 1;
-                        string valueCode = $"rowData[{colIndex}]";
-                        string parseLogic = GenerateParseSyntax(csharpType, valueCode);
-
-                        // 인덱스 범위 및 빈 값 체크
-                        sb.AppendLine($"\t\t\tif (rowData.Count > {colIndex} && !string.IsNullOrEmpty({valueCode}))");
-                        sb.AppendLine($"\t\t\t{{");
-                        sb.AppendLine($"\t\t\t\tinstance.{fieldName}.Add({parseLogic});");
-                        sb.AppendLine($"\t\t\t}}");
-                    }
-                }
-                else
-                {
-                    // [Single 파싱]
-                    int colIndex = fieldDef.FieldOrder - 1;
-                    string valueCode = $"rowData[{colIndex}]";
-                    string parseLogic = GenerateParseSyntax(csharpType, valueCode);
-
-                    sb.AppendLine($"\t\t\tif (rowData.Count > {colIndex} && !string.IsNullOrEmpty({valueCode}))");
-                    sb.AppendLine($"\t\t\t{{");
-                    sb.AppendLine($"\t\t\t\tinstance.{fieldName} = {parseLogic};");
-                    sb.AppendLine($"\t\t\t}}");
-                }
+                string paramName = char.ToLower(group.Name[0]) + group.Name.Substring(1);
+                sb.AppendLine($"\t\t\tthis.{group.Name} = {paramName};"); // 세미콜론 추가
             }
-
-            sb.AppendLine("\t\t\treturn instance;");
+            
             sb.AppendLine("\t\t}");
+
             sb.AppendLine("\t}");
             sb.AppendLine("}");
-
             return sb.ToString();
         }
-
-        // ==================================================================================
-        // 3. 헬퍼 메서드 (타입 변환 및 구문 생성)
-        // ==================================================================================
-
-        // 엑셀 타입(string) -> C# 타입(string) 변환
+        private string GenerateParserContent(string dataName, in ExcelSheetData sheetData)
+        {
+            var sb = new StringBuilder();
+            return sb.ToString();
+        }
+        private int GetTypeSize(string rawType)
+        {
+            string type = rawType.ToLower().Trim();
+            return type switch
+            {
+                "double" or "long" or "int64" => 8,
+                "int" or "int32" or "float" or "single" => 4,
+                "short" => 2,
+                "bool" or "byte" => 1,
+                "string" or "str" => 64, // FixedString64Bytes 가정 시
+                _ => 4 // Enum이나 기타 기본값
+            };
+        }
         private string ConvertToCSharpType(string rawType, GenerationMode mode)
         {
             string type = rawType.ToLower().Trim();
-
-            // 1. 공통 타입 처리 (int, float, bool 등)
             switch (type)
             {
-                case "int":
-                case "int32": return "int";
-                case "long":
-                case "int64": return "long";
-                case "float":
-                case "single": return "float";
+                case "int": case "int32": return "int";
+                case "long": case "int64": return "long";
+                case "float": case "single": return "float";
                 case "double": return "double";
-                case "bool":
-                case "boolean": return "bool";
-
-                // 2. 환경에 따라 달라지는 타입 처리 (핵심!)
+                case "bool": case "boolean": return "bool";
                 case "string":
                 case "str":
+                    // MessagePack도 Unity에서 FixedString을 사용할 수 있지만, 
+                    // 별도의 Formatter 등록이 필요할 수 있습니다.
                     return mode == GenerationMode.UnityDOD ? "FixedString64Bytes" : "string";
-
-                default:
-                    return rawType; // Enum 등은 그대로 반환
-            }
-        }
-
-        // 타입별 파싱 코드(int.Parse 등) 생성
-        private string GenerateParseSyntax(string type, string valueVariable)
-        {
-            switch (type)
-            {
-                case "int":
-                    return $"int.Parse({valueVariable})";
-                case "long":
-                    return $"long.Parse({valueVariable})";
-                case "float":
-                    return $"float.Parse({valueVariable})";
-                case "double":
-                    return $"double.Parse({valueVariable})";
-                case "bool":
-                    return $"bool.Parse({valueVariable})";
-                case "string":
-                    return valueVariable; // 문자열은 변환 불필요
-                default:
-                    // Enum이나 기타 타입 대응이 필요하면 여기에 추가
-                    // 예: return $"Enum.Parse<{type}>({valueVariable})";
-                    return valueVariable;
+                default: return rawType;
             }
         }
 

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "kces6ZYhmLk=",
+  "dgSpecHash": "gbERwNUp47g=",
   "success": true,
-  "projectFilePath": "D:\\Programming\\DataForgeModule\\DataForge.csproj",
+  "projectFilePath": "D:\\Programming\\DataForge\\DataForge.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ovate\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.0\\communitytoolkit.mvvm.8.4.0.nupkg.sha512",
     "C:\\Users\\ovate\\.nuget\\packages\\epplus\\8.4.0\\epplus.8.4.0.nupkg.sha512",

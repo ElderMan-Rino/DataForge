@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DataForge")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9e107c0d63c6443e1470771ea794c5837796ec6d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+492597861a842df3c156e9c24f624082231d7f37")]
 [assembly: System.Reflection.AssemblyProductAttribute("DataForge")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DataForge")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
