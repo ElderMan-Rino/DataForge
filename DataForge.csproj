@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="EPPlus" Version="8.4.0" />
+    <PackageReference Include="MessagePack" Version="3.1.4" />
+    <PackageReference Include="System.Reactive" Version="6.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\MemoryPack\Data\" />
+    <Folder Include="Resources\MemoryPack\Parser\" />
+  </ItemGroup>
+
+</Project>

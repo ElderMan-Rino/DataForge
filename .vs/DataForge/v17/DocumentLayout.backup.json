@@ -1,0 +1,53 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Programming\\DataForgeModule\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3DB48512-05B1-4529-970D-277C798C62D4}|DataForge.csproj|d:\\programming\\dataforgemodule\\dataforge\\core\\codegenerators\\memorypack\\memorypacksourcegenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3DB48512-05B1-4529-970D-277C798C62D4}|DataForge.csproj|solutionrelative:dataforge\\core\\codegenerators\\memorypack\\memorypacksourcegenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3DB48512-05B1-4529-970D-277C798C62D4}|DataForge.csproj|d:\\programming\\dataforgemodule\\dataforge\\core\\codesaver\\filesourcecodesaver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3DB48512-05B1-4529-970D-277C798C62D4}|DataForge.csproj|solutionrelative:dataforge\\core\\codesaver\\filesourcecodesaver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MemoryPackSourceGenerator.cs",
+              "DocumentMoniker": "D:\\Programming\\DataForgeModule\\DataForge\\Core\\CodeGenerators\\MemoryPack\\MemoryPackSourceGenerator.cs",
+              "RelativeDocumentMoniker": "DataForge\\Core\\CodeGenerators\\MemoryPack\\MemoryPackSourceGenerator.cs",
+              "ToolTip": "D:\\Programming\\DataForgeModule\\DataForge\\Core\\CodeGenerators\\MemoryPack\\MemoryPackSourceGenerator.cs",
+              "RelativeToolTip": "DataForge\\Core\\CodeGenerators\\MemoryPack\\MemoryPackSourceGenerator.cs",
+              "ViewState": "AgIAAMoAAAAAAAAAAAAkwNcAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-12T15:36:28.642Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "FileSourceCodeSaver.cs",
+              "DocumentMoniker": "D:\\Programming\\DataForgeModule\\DataForge\\Core\\CodeSaver\\FileSourceCodeSaver.cs",
+              "RelativeDocumentMoniker": "DataForge\\Core\\CodeSaver\\FileSourceCodeSaver.cs",
+              "ToolTip": "D:\\Programming\\DataForgeModule\\DataForge\\Core\\CodeSaver\\FileSourceCodeSaver.cs",
+              "RelativeToolTip": "DataForge\\Core\\CodeSaver\\FileSourceCodeSaver.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-12T15:36:19.522Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

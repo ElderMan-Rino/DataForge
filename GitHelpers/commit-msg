@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# 현재 브랜치명 가져오기
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# 작성자 정보 가져오기
+AUTHOR_NAME=$(git config user.name)
+
+# 기존 커밋 메시지 읽어오기
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# 새로운 메시지 포맷 적용
+echo "[${BRANCH_NAME} / ${AUTHOR_NAME}] ${COMMIT_MSG}" > "$COMMIT_MSG_FILE"
