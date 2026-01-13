@@ -42,9 +42,16 @@ namespace Elder.DataForge.Core.CodeGenerators.MemoryPack
                 // 시트 단위로 순회 (시트 1개 = 클래스 1개 = 파일 2개)
                 foreach (var sheet in excelData.SheetDatas.Values)
                 {
-                    string dataName = CreateStructName(sheet.SheetName, DTOSuffix);
-                    string modelContent = GenerateModelContent(dataName, sheet);
-                    generatedFiles.Add(new GeneratedSourceCode($"{dataName}.cs", modelContent));
+                    var dtoName = CreateStructName(sheet.SheetName, DTOSuffix);
+                    var modelContent = GenerateModelContent(dtoName, sheet);
+                    generatedFiles.Add(new GeneratedSourceCode($"{dtoName}.cs", modelContent));
+
+                    var parserContent = GenerateParserContent(dtoName, sheet);
+                    generatedFiles.Add(new GeneratedSourceCode($"{dtoName}Parser.cs", parserContent));
+
+                    //string dodName = CreateStructName(sheet.SheetName, DODSuffix);
+                    //string dodContent = GenerateModelContent(dodName, sheet, GenerationMode.UnityDOD);
+                    //generatedFiles.Add(new GeneratedSourceCode($"{dodName}.cs", dodContent));
                 }
             }
 
@@ -57,7 +64,7 @@ namespace Elder.DataForge.Core.CodeGenerators.MemoryPack
 
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using MessagePack;"); // MessagePack 네임스페이스
+            sb.AppendLine("using MessagePack;"); 
             sb.AppendLine();
 
             sb.AppendLine($"namespace {TargetDataNamespace}");
@@ -132,9 +139,20 @@ namespace Elder.DataForge.Core.CodeGenerators.MemoryPack
             sb.AppendLine("}");
             return sb.ToString();
         }
+
         private string GenerateParserContent(string dataName, in ExcelSheetData sheetData)
         {
             var sb = new StringBuilder();
+
+            sb.AppendLine("using System;");
+            sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine("using System.Linq;");
+            sb.AppendLine();
+
+            sb.AppendLine($"namespace {TargetDataNamespace}");
+            sb.AppendLine("{");
+
+            sb.AppendLine("}");
             return sb.ToString();
         }
         private int GetTypeSize(string rawType)
