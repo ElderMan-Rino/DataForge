@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.CodeGenerators.MemoryPack;
+﻿using Elder.DataForge.Core.CodeGenerators.MessagePack;
 using Elder.DataForge.Core.Interfaces;
 using System;
 using System.Collections.Generic;

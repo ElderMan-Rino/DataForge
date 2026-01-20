@@ -1,5 +1,5 @@
 ﻿using DataForge.DataForge.Core.Converters.MemoryPack;
-using Elder.DataForge.Core.CodeGenerators.MemoryPack;
+using Elder.DataForge.Core.CodeGenerators.MessagePack;
 using Elder.DataForge.Core.CodeSaver;
 using Elder.DataForge.Core.ContentLoaders.Excels;
 using Elder.DataForge.Core.InfoLoaders.Excels;
@@ -7,10 +7,11 @@ using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using Elder.Reactives.Helpers;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.IO;
 
 namespace Elder.DataForge.Models
 {
@@ -18,13 +19,10 @@ namespace Elder.DataForge.Models
     {
         private IDocumentInfoLoader _infoLoader = new ExcelInfoLoader();
         private IDocumentContentExtracter _contentExtracter = new ExcelContentExtracter();
-        private ISourceCodeGenerator _codeGenerator = new MemoryPackSourceGenerator();
+        private ISourceCodeGenerator _codeGenerator = new MessagePackSourceGenerator();
         private ISourceCodeSaver _codeSaver = new FileSourceCodeSaver();
 
-        //private IDataConverter _converter = new MemoryPackConverter();
-        // private IDataExporter _exporter = new JsonToByteExporter();
-
-        private string _baseOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources\MemoryPack"));
+        private string _baseOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources\MessagePack"));
 
         private Dictionary<string, DocumentInfoData> _documenttInfoDataMap = new();
         private Dictionary<string, DocumentContentData> _documentContents = new();
@@ -177,13 +175,57 @@ namespace Elder.DataForge.Models
 
             // 데이터 모델 저장
             var saveDataResult = await _codeSaver.SaveAsync(dataFiles, dataPath);
-            if (!saveDataResult) return false;
-
+            if (!saveDataResult)
+            {
+                return false;
+            }
+            
             // 파서 저장
             var saveParserResult = await _codeSaver.SaveAsync(parserFiles, parserPath);
-            if (!saveParserResult) return false;
+            if (!saveParserResult)
+            {
+                return false;
+            }
 
+            string mpcPath = Path.Combine(_baseOutputPath, "Mpc");
+            bool mpcResult = await Task.Run(() => RunMPC(dataPath, mpcPath, "Elder.Framework.MessagePack.Generated"));
+            if (!mpcResult)
+            {
+                return false;
+            }
             return true;
+        }
+
+        private bool RunMPC(string inputPath, string outputPath, string nameSpace)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet", // mpc가 dotnet tool로 설치되어 있어야 합니다.
+                    Arguments = $"mpc -i \"{inputPath}\" -o \"{outputPath}\" -n \"{nameSpace}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = Process.Start(startInfo))
+                {
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        string error = process.StandardError.ReadToEnd();
+                        // 에러 로그 기록 로직 필요
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private void RunTask(Func<Task> taskFunc)

@@ -16,8 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\MemoryPack\Data\" />
-    <Folder Include="Resources\MemoryPack\Parser\" />
+    <Folder Include="Resources\MessagePack\Data\" />
+    <Folder Include="Resources\MessagePack\Parser\" />
   </ItemGroup>
+
+<ItemGroup>
+	<None Include="Generated\**\*.cs" />
+</ItemGroup>
 
 </Project>
