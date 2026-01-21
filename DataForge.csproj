@@ -1,27 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="EPPlus" Version="8.4.0" />
-    <PackageReference Include="MessagePack" Version="3.1.4" />
-    <PackageReference Include="System.Reactive" Version="6.1.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="EPPlus" Version="8.4.0" />
+		<PackageReference Include="MessagePack" Version="3.1.4" />
+		<PackageReference Include="System.Reactive" Version="6.1.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Resources\MessagePack\Data\" />
-    <Folder Include="Resources\MessagePack\Parser\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Resources\MessagePack\**\*.cs" />
 
-<ItemGroup>
-	<None Include="Generated\**\*.cs" />
-</ItemGroup>
+		<None Include="Resources\MessagePack\**\*.cs" />
+
+		<Folder Include="Resources\MessagePack\Data\" />
+		<Folder Include="Resources\MessagePack\Parser\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Generated\**\*.cs" />
+	</ItemGroup>
 
 </Project>
