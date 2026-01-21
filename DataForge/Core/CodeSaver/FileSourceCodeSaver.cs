@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,10 +27,12 @@ namespace Elder.DataForge.Core.CodeSaver
                 {
                     string fullPath = Path.Combine(outputDirectory, code.FileName);
 
-                    // 비동기 쓰기 (UTF8 인코딩)
-                    await File.WriteAllTextAsync(fullPath, code.Content, Encoding.UTF8);
-                }
+                    // 1. 여기서 줄 바꿈 정규화 (CRLF 강제)를 처리합니다.
+                    string normalized = code.Content.Replace("\r\n", "\n").Replace("\n", "\r\n");
 
+                    // 2. UTF-8 with BOM으로 저장 (Visual Studio 경고 방지)
+                    await File.WriteAllTextAsync(fullPath, normalized, Encoding.UTF8);
+                }
                 return true;
             }
             catch (Exception ex)

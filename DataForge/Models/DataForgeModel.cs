@@ -93,26 +93,6 @@ namespace Elder.DataForge.Models
                 return false;
             }
         }
-
-        /// <summary>
-        /// 파일 저장 시 줄 바꿈을 CRLF로 통일하고 UTF-8 BOM으로 저장하여 VS 경고를 방지합니다.
-        /// </summary>
-        private async Task SaveNormalizedFiles(IEnumerable<GeneratedSourceCode> files, string basePath)
-        {
-            if (!Directory.Exists(basePath)) Directory.CreateDirectory(basePath);
-
-            foreach (var file in files)
-            {
-                string fullPath = Path.Combine(basePath, file.FileName);
-
-                // [해결] 일관성 없는 줄 끝 방지: 모든 개행을 CRLF(\r\n)로 통일
-                string normalized = file.Content.Replace("\r\n", "\n").Replace("\n", "\r\n");
-
-                // [해결] UTF-8 with BOM 명시적 저장하여 Visual Studio가 즉시 인식하게 함
-                await File.WriteAllTextAsync(fullPath, normalized, Encoding.UTF8);
-            }
-        }
-
         #endregion
 
         private void SubscribeToContentLoader()
@@ -186,8 +166,10 @@ namespace Elder.DataForge.Models
             var parserFiles = generatedFiles.Where(f => f.FileName.EndsWith(".Parser.cs")).ToList();
 
             UpdateProgressLevel("Saving Normalized Files...");
-            await SaveNormalizedFiles(dataFiles, dataPath);
-            await SaveNormalizedFiles(parserFiles, parserPath);
+            bool s1 = await _codeSaver.SaveAsync(dataFiles, dataPath);
+            bool s2 = await _codeSaver.SaveAsync(parserFiles, parserPath);
+
+            if (!s1 || !s2) return false;
 
             // 5. MPC 실행 및 리졸버 생성
             UpdateProgressLevel("Running MessagePack Generator...");
