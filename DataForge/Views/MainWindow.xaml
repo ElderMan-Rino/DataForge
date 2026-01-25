@@ -10,7 +10,8 @@
         <Button Content="Export Data" Command="{Binding ExportDataCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 45, 10, 0"/>
         <Button Content="Create Elements" Command="{Binding CreateElementsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 80, 10, 0" RenderTransformOrigin="1.266,1.947"/>
         <Button Content="Export DLL" Command="{Binding ExportDLLCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 115, 10, 0" RenderTransformOrigin="1.266,1.947"/>
-
+        <Button Content="Open Setting" Command="{Binding OpenSettingCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0,150,10,0" RenderTransformOrigin="1.266,1.947"/>
+        
         <!-- 진행 상태 -->
         <TextBlock x:Name="ExportProgressText" HorizontalAlignment="Left"  Margin="10,0,0,10" VerticalAlignment="Bottom" Height="30"/>
 
@@ -29,5 +30,6 @@
                 </ListView.View>
             </ListView>
         </ScrollViewer>
+       
     </Grid>
 </Window>

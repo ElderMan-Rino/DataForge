@@ -1,4 +1,5 @@
-﻿using Elder.DataForge.Core.CodeGenerators.MessagePack;
+﻿using DataForge.DataForge.Core.SchemaAnalyzer;
+using Elder.DataForge.Core.CodeGenerators.MessagePack;
 using Elder.DataForge.Core.CodeSaver;
 using Elder.DataForge.Core.ContentLoaders.Excels;
 using Elder.DataForge.Core.InfoLoaders.Excels;
@@ -11,7 +12,7 @@ using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Text;
+using System.Text; // Encoding 설정을 위해 필요
 
 namespace Elder.DataForge.Models
 {
@@ -21,6 +22,7 @@ namespace Elder.DataForge.Models
         private IDocumentContentExtracter _contentExtracter = new ExcelContentExtracter();
         private ISourceCodeGenerator _codeGenerator = new MessagePackSourceGenerator();
         private ISourceCodeSaver _codeSaver = new FileSourceCodeSaver();
+        private ITableSchemaAnalyzer _schemaAnalyzer = new TableSchemaAnalyzer();
 
         // [경로 설정] 프로젝트 루트와 출력 경로 정의
         private string _projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
@@ -30,7 +32,6 @@ namespace Elder.DataForge.Models
         private Dictionary<string, DocumentContentData> _documentContents = new();
 
         private CompositeDisposable _disposables = new();
-
         private Subject<string> _updateProgressLevel = new();
         private Subject<float> _updateProgressValue = new();
 
@@ -38,19 +39,15 @@ namespace Elder.DataForge.Models
         private bool _tasking = false;
 
         public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; private set; } = new();
-
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
 
         public DataForgeModel()
         {
             SubscribeToContentLoader();
-            SubscribeToDataConverter();
-            SubscribeToDataExporter();
         }
 
-        #region [Setup & Automation 로직 추가]
-
+        #region [Setup & Automation]
         /// <summary>
         /// MPC 로컬 도구가 설치되어 있는지 확인하고 없으면 자동으로 설치합니다.
         /// </summary>
@@ -74,7 +71,7 @@ namespace Elder.DataForge.Models
                     if (p != null) await p.WaitForExitAsync();
                 }
 
-                // 2. MPC 툴 로컬 설치 시도 (이미 있으면 에러가 나지만 무시하고 진행됨)
+                // 2. MPC 툴 로컬 설치 시도
                 UpdateProgressLevel("Syncing MessagePack Generator Tool...");
                 var installInfo = new ProcessStartInfo("dotnet", "tool install MessagePack.Generator")
                 {
@@ -95,19 +92,16 @@ namespace Elder.DataForge.Models
         }
         #endregion
 
+        private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
+        private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void OnSourceProgressLevelUpdated(string progressLevel) => UpdateProgressLevel(progressLevel);
+        private void OnSourceProgressValueUpdated(float progressValue) => UpdateProgressValue(progressValue);
+
         private void SubscribeToContentLoader()
         {
             _contentExtracter.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
             _contentExtracter.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
         }
-
-        private void SubscribeToDataConverter() { }
-        private void SubscribeToDataExporter() { }
-
-        private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
-        private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
-        private void OnSourceProgressLevelUpdated(string progressLevel) => UpdateProgressLevel(progressLevel);
-        private void OnSourceProgressValueUpdated(float progressValue) => UpdateProgressValue(progressValue);
 
         public void HandleLoadDocument()
         {
@@ -131,8 +125,9 @@ namespace Elder.DataForge.Models
 
         public void CreateElements() => RunTask(CreateElementsAsync);
 
-        private async Task<bool> ExportDataAsync()
+        private async Task<bool> ExtractDocumentContentsAsync()
         {
+            _documentContents.Clear();
             var documentContents = await _contentExtracter.ExtractDocumentContentDataAsync(_documenttInfoDataMap.Values);
             if (documentContents == null || !documentContents.Any()) return false;
 
@@ -142,23 +137,34 @@ namespace Elder.DataForge.Models
             return true;
         }
 
+        // [핵심] 리팩토링된 전체 파이프라인
         private async Task<bool> CreateElementsAsync()
         {
             // 1. 환경 체크 및 도구 설치 자동화
             UpdateProgressLevel("Checking Environment...");
             await EnsureMpcToolInstalled();
 
-            // 2. 데이터 추출
-            UpdateProgressLevel("Extracting Document Data...");
-            var exportResult = await ExportDataAsync();
-            if (!exportResult) return false;
+            // 2. 원시 데이터 추출 (Extraction)
+            UpdateProgressLevel("Extracting Document Contents...");
+            if (!await ExtractDocumentContentsAsync()) return false;
 
-            // 3. 소스 코드 생성
-            UpdateProgressLevel("Generating Source Codes...");
-            var generatedFiles = await _codeGenerator.GenerateAsync(_documentContents);
+            // 3. 스키마 분석 (Analysis)
+            // 여러 엑셀 파일과 시트를 통합 분석하여 표준화된 설계도(Schemas)를 생성합니다.
+            UpdateProgressLevel("Analyzing Table Schemas (Multi-Sheet Support)...");
+            var schemas = _schemaAnalyzer.AnalyzeFields(_documentContents);
+            if (schemas == null || !schemas.Any())
+            {
+                UpdateProgressLevel("Error: No valid sheet schemas found.");
+                return false;
+            }
+
+            // 4. 소스 코드 생성 (Generation)
+            // 제너레이터는 분석된 'schemas' 설계도를 보고 코드를 짭니다.
+            UpdateProgressLevel("Generating Source Codes from Schemas...");
+            var generatedFiles = await _codeGenerator.GenerateAsync(schemas);
             if (generatedFiles == null || !generatedFiles.Any()) return false;
 
-            // 4. 경로 설정 및 파일 분류 저장 (정규화 포함)
+            // 5. 경로 설정 및 파일 분류 저장 (정규화 포함)
             string dataPath = Path.Combine(_baseOutputPath, "Data");
             string parserPath = Path.Combine(_baseOutputPath, "Parser");
 
@@ -171,8 +177,8 @@ namespace Elder.DataForge.Models
 
             if (!s1 || !s2) return false;
 
-            // 5. MPC 실행 및 리졸버 생성
-            UpdateProgressLevel("Running MessagePack Generator...");
+            // 6. MPC 실행 및 리졸버 생성
+            UpdateProgressLevel("Running MessagePack Generator (MPC)...");
             string mpcPath = Path.Combine(_baseOutputPath, "Mpc");
             if (!Directory.Exists(mpcPath)) Directory.CreateDirectory(mpcPath);
 
@@ -211,7 +217,6 @@ namespace Elder.DataForge.Models
                 };
 
                 // 2. 환경 변수 강제 주입 (D드라이브 설치 시 필수)
-                // MSBuild.exe의 상위 폴더에서 Sdks 폴더 경로를 유추합니다.
                 string msBuildBinDir = Path.GetDirectoryName(msBuildPath);
                 string vsRoot = Path.GetFullPath(Path.Combine(msBuildBinDir, @"..\..\..\..\")); // MSBuild\Current\Bin -> MSBuild 기준
                 string sdksPath = Path.Combine(vsRoot, @"MSBuild\Sdks");
@@ -236,7 +241,6 @@ namespace Elder.DataForge.Models
 
                     if (process.ExitCode != 0)
                     {
-                        // 상세 에러 로그 출력
                         Debug.WriteLine($"MPC Fail Output: {output}");
                         Debug.WriteLine($"MPC Fail Error: {error}");
                         return false;
@@ -253,13 +257,13 @@ namespace Elder.DataForge.Models
 
         private string FindMsBuildPath()
         {
-            // 사용자님이 확인해주신 D드라이브 경로를 최우선 순위로 둡니다.
+            // 사용자의 환경에 맞는 MSBuild 경로 우선 순위 설정
             string[] searchPaths = {
-        @"D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
-        @"D:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe",
-        @"D:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
-        @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
-    };
+                @"D:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
+                @"D:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe",
+                @"D:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
+                @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+            };
 
             foreach (var path in searchPaths)
             {
@@ -268,6 +272,7 @@ namespace Elder.DataForge.Models
             return null;
         }
 
+        #region [Task Management & Dispose]
         private void RunTask(Func<Task> taskFunc)
         {
             if (_tasking) return;
@@ -277,8 +282,8 @@ namespace Elder.DataForge.Models
 
         private async Task RunTaskAsync(Func<Task> taskFunc)
         {
-            await taskFunc.Invoke();
-            _tasking = false;
+            try { await taskFunc.Invoke(); }
+            finally { _tasking = false; }
         }
 
         public void Dispose()
@@ -293,9 +298,9 @@ namespace Elder.DataForge.Models
             {
                 if (disposing)
                 {
+                    _disposables.Dispose();
                     ClearDocumentInfoCollection();
                     ClearDocumentInfos();
-                    _disposables.Dispose();
                 }
                 _disposed = true;
             }
@@ -323,5 +328,6 @@ namespace Elder.DataForge.Models
         }
 
         ~DataForgeModel() => Dispose(false);
+        #endregion
     }
 }

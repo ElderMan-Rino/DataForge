@@ -31,23 +31,51 @@ namespace Elder.DataForge.Core.ContentLoaders.Excels
                 var workSheets = package.Workbook.Worksheets;
                 foreach (var worksheet in workSheets)
                 {
-                    // 시트 하나 기준으로 Sheet컨텐츠 하나씩 가지고 있어야하나?
                     string sheetName = worksheet.Name;
                     if (sheetDatas.ContainsKey(sheetName))
                         continue;
 
                     var fieldDefinitions = new List<FieldDefinition>();
                     var fieldValues = new Dictionary<int, List<string>>();
+                    var rows = new List<List<string>>(); // [추가] 행 단위 데이터를 담을 리스트
+
                     int rowCount = worksheet.Dimension?.Rows ?? 0;
                     int colCount = worksheet.Dimension?.Columns ?? 0;
                     var dataName = string.Empty;
+
                     for (int row = 1; row <= rowCount; row++)
                     {
-                        var rowData = new List<string>();
+                        var rowData = new List<string>(); // 현재 행의 모든 컬럼 값을 저장
+                        bool isDataRow = false; // 해당 행에 실제 데이터가 포함되었는지 여부
+
                         for (int col = 1; col <= colCount; col++)
-                            ProcessCell(worksheet.Cells[row, col].Text, col, ref dataName, fieldDefinitions, fieldValues);
+                        {
+                            string cellText = worksheet.Cells[row, col].Text;
+
+                            // 1. 기존 로직 수행 (필드 정의 및 컬럼별 데이터 수집)
+                            ProcessCell(cellText, col, ref dataName, fieldDefinitions, fieldValues);
+
+                            // 2. 데이터 행 판별 로직
+                            // 셀 값이 비어있지 않고, 정의부(VariableInfo)나 메타데이터(DataName)가 아닐 경우 데이터 행으로 간주
+                            if (!string.IsNullOrEmpty(cellText) &&
+                                !TryExtractVariableInfo(cellText, out _) &&
+                                !TryExtractDataName(cellText, out _))
+                            {
+                                isDataRow = true;
+                            }
+
+                            rowData.Add(cellText); // 현재 셀의 값을 행 리스트에 추가
+                        }
+
+                        // 3. 실제 데이터가 포함된 행만 리스트에 추가
+                        if (isDataRow)
+                        {
+                            rows.Add(rowData);
+                        }
                     }
-                    sheetDatas.Add(sheetName, new ExcelSheetData(sheetName, dataName, fieldDefinitions, fieldValues));
+
+                    // [수정] 업데이트된 ExcelSheetData 생성자 호출 (rows 포함)
+                    sheetDatas.Add(sheetName, new ExcelSheetData(sheetName, dataName, fieldDefinitions, fieldValues, rows));
                 }
             }
 
