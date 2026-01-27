@@ -1,10 +1,11 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
-using Elder.DataForge;
+﻿using Elder.DataForge;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models;
 using Elder.DataForge.ViewModels;
+using Elder.DataForge.Views;
+using System.Configuration;
+using System.Data;
+using System.Windows;
 
 namespace Elder
 {

@@ -3,6 +3,7 @@ using DataForge;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models;
 using Elder.DataForge.Models.Data;
+using Elder.DataForge.Views;
 using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
 using System.Windows;
@@ -21,7 +22,7 @@ namespace Elder.DataForge.ViewModels
         public ICommand LoadDocumentsCommand { get; }
         public ICommand ExportDataCommand { get; }
         public ICommand CreateElementsCommand { get; }
-        public ICommand ExportDLLCommand { get; }
+        public ICommand BuildDLLCommand { get; }
         public ICommand OpenSettingCommand { get; }
 
         public DataForgeViewModel()
@@ -29,7 +30,7 @@ namespace Elder.DataForge.ViewModels
             LoadDocumentsCommand = new RelayCommand(OnLoadDocumentsCommand);
             ExportDataCommand = new RelayCommand(OnExportDataCommand);
             CreateElementsCommand = new RelayCommand(OnCreateElementsCommand);
-            ExportDLLCommand = new RelayCommand(OnExportDLLCommand);
+            BuildDLLCommand = new RelayCommand(OnBuildDLLCommand);
             OpenSettingCommand = new RelayCommand(OnOpenSettingCommand);
         }
 
@@ -48,15 +49,17 @@ namespace Elder.DataForge.ViewModels
             _model?.CreateElements();
         }
 
-        private void OnExportDLLCommand()
+        private void OnBuildDLLCommand()
         {
-
+            _model?.BuildDlls();
         }
 
         private void OnOpenSettingCommand()
         {
             // SettingsWindow 인스턴스 생성
-            SettingsWindow settingsWin = new SettingsWindow();
+            var settingsWin = new SettingsWindow();
+            settingsWin.TxtBaseOutputPath.Text = Properties.Settings.Default.BaseOutputPath;
+            settingsWin.TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
 
             // 메인 윈도우를 소유자로 설정 (중앙 정렬을 위함)
             settingsWin.Owner = Application.Current.MainWindow;
@@ -65,6 +68,11 @@ namespace Elder.DataForge.ViewModels
             if (settingsWin.ShowDialog() == true)
             {
                 // 사용자가 'Save'를 눌렀을 때의 후속 처리
+
+                // 1. 창에서 설정 객체를 가져옵니다.
+                //_model?.UpdateSettingsFromLocal(newSettings);
+
+                // 3. (선택 사항) 로컬 파일(json 등)에 저장하여 다음 실행 시에도 유지되게 합니다.
             }
         }
 

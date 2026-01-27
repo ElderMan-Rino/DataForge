@@ -13,6 +13,8 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text; // Encoding 설정을 위해 필요
+using System.Windows;
+using Elder.DataForge.Properties;
 
 namespace Elder.DataForge.Models
 {
@@ -26,7 +28,21 @@ namespace Elder.DataForge.Models
 
         // [경로 설정] 프로젝트 루트와 출력 경로 정의
         private string _projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-        private string _baseOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources\MessagePack"));
+        private string _baseOutputPath;
+        private string _rootNamespace;
+
+        private const string DodProjectTemplate =
+@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>{0}</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include=""MessagePack"" Version=""2.5.140"" />
+  </ItemGroup>
+</Project>";
 
         private Dictionary<string, DocumentInfoData> _documenttInfoDataMap = new();
         private Dictionary<string, DocumentContentData> _documentContents = new();
@@ -44,10 +60,22 @@ namespace Elder.DataForge.Models
 
         public DataForgeModel()
         {
+            LoadSettingsValue();
             SubscribeToContentLoader();
         }
 
         #region [Setup & Automation]
+        private void LoadSettingsValue()
+        {
+            _baseOutputPath = Settings.Default.BaseOutputPath;
+            _rootNamespace = Settings.Default.RootNamespace;
+
+            if (string.IsNullOrEmpty(_baseOutputPath))
+            {
+                _baseOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources\MessagePack"));
+            }
+        }
+
         /// <summary>
         /// MPC 로컬 도구가 설치되어 있는지 확인하고 없으면 자동으로 설치합니다.
         /// </summary>
@@ -177,10 +205,15 @@ namespace Elder.DataForge.Models
 
             if (!s1 || !s2) return false;
 
+            // [추가] 프로젝트 파일(.csproj) 자동 생성
+            UpdateProgressLevel("Generating Project Templates...");
+            await GenerateCsprojFile(dataPath, "Elder.Data.DOD");
+
             // 6. MPC 실행 및 리졸버 생성
             UpdateProgressLevel("Running MessagePack Generator (MPC)...");
             string mpcPath = Path.Combine(_baseOutputPath, "Mpc");
-            if (!Directory.Exists(mpcPath)) Directory.CreateDirectory(mpcPath);
+            if (!Directory.Exists(mpcPath)) 
+                Directory.CreateDirectory(mpcPath);
 
             // [해결] MSBuild 감지 실패 에러를 방지하는 RunMPC 실행
             bool mpcResult = await Task.Run(() => RunMPC(dataPath, mpcPath, "Elder.Framework.MessagePack.Generated"));
@@ -190,6 +223,22 @@ namespace Elder.DataForge.Models
 
             return mpcResult;
         }
+
+        #region [Internal Logic: Project File Generation]
+
+        // .csproj 파일을 생성하는 핵심 메서드
+        private async Task GenerateCsprojFile(string targetPath, string assemblyName, string additionalTags = "")
+        {
+            if (!Directory.Exists(targetPath)) 
+                Directory.CreateDirectory(targetPath);
+
+            string content = string.Format(DodProjectTemplate, assemblyName, additionalTags);
+            string filePath = Path.Combine(targetPath, $"{assemblyName}.csproj");
+
+            await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
+        }
+
+        #endregion
 
         private bool RunMPC(string inputPath, string outputPath, string nameSpace)
         {
@@ -272,6 +321,132 @@ namespace Elder.DataForge.Models
             return null;
         }
 
+        public void BuildDlls() => RunTask(BuildDllsAsync);
+
+        private async Task<bool> IsDotNetSdk9Installed()
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo("dotnet", "--version")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null) return false;
+
+                string version = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                // 9.x.x 버전인지 확인 (맨 앞자리가 9인지 체크)
+                if (!string.IsNullOrWhiteSpace(version) && version.Trim().StartsWith("9"))
+                {
+                    return true;
+                }
+
+                // 만약 설치된 SDK 목록을 더 자세히 보고 싶다면 "dotnet --list-sdks"를 쓸 수도 있습니다.
+                return false;
+            }
+            catch
+            {
+                // dotnet 명령어 자체가 인식되지 않는 경우 (SDK 미설치)
+                return false;
+            }
+        }
+
+        private async Task<bool> BuildDllsAsync()
+        {
+            // 1. .NET 9 SDK 설치 여부 확인
+            UpdateProgressLevel("Checking .NET SDK Version...");
+            bool isInstalled = await IsDotNetSdk9Installed();
+
+            if (!isInstalled)
+            {
+                UpdateProgressLevel("Error: .NET 9 SDK not found.");
+
+                // 메인 스레드(UI)에서 메시지 박스 출력
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var result = MessageBox.Show(
+                        ".NET 9.0 SDK가 설치되어 있지 않거나 경로를 찾을 수 없습니다.\n" +
+                        "DLL 빌드를 위해 SDK 설치가 필요합니다. 다운로드 페이지로 이동하시겠습니까?",
+                        ".NET 9 SDK Required",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // 다운로드 페이지 자동 연결
+                        Process.Start(new ProcessStartInfo("https://dotnet.microsoft.com/download/dotnet/9.0")
+                        {
+                            UseShellExecute = true
+                        });
+                    }
+                });
+
+                return false;
+            }
+                
+            try
+            {
+                UpdateProgressLevel("Starting DLL Build Process...");
+
+                // 1. 경로 설정 (SettingsWindow에서 받은 경로를 사용하는 것이 좋음)
+                string dodSourcePath = Path.Combine(_baseOutputPath, "Data"); // DOD 코드 위치
+                string parserSourcePath = Path.Combine(_baseOutputPath, "Parser"); // DTO/Parser 코드 위치
+                string buildTempPath = Path.Combine(_projectRoot, "BuildTemp");
+
+                if (!Directory.Exists(buildTempPath)) Directory.CreateDirectory(buildTempPath);
+
+                // 2. DOD DLL 빌드 (유니티 런타임용)
+                UpdateProgressLevel("Compiling DOD Runtime DLL...");
+                bool dodResult = await ExecuteDllBuild(dodSourcePath, "Elder.Data.DOD", buildTempPath);
+
+                // 3. DTO/Parser DLL 빌드 (에디터/툴용)
+                UpdateProgressLevel("Compiling DTO/Parser Editor DLL...");
+                bool parserResult = await ExecuteDllBuild(parserSourcePath, "Elder.Data.Parser", buildTempPath);
+
+                if (dodResult && parserResult)
+                {
+                    UpdateProgressLevel("DLL Build Success! Moving to Unity...");
+                    // TODO: 여기서 빌드된 DLL을 유니티 프로젝트 폴더로 복사하는 로직 추가
+                    return true;
+                }
+
+                UpdateProgressLevel("DLL Build Failed. Check logs.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"BuildDlls Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> ExecuteDllBuild(string sourcePath, string assemblyName, string workingDir)
+        {
+            // 이 메서드는 소스 폴더를 기반으로 dotnet build 명령을 실행합니다.
+            // 실제 구현 시 해당 폴더에 .csproj 파일이 존재해야 합니다.
+            var startInfo = new ProcessStartInfo("dotnet", $"build -c Release -o \"{workingDir}\"")
+            {
+                WorkingDirectory = sourcePath, // .csproj가 있는 위치
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process != null)
+            {
+                await process.WaitForExitAsync();
+                return process.ExitCode == 0;
+            }
+            return false;
+        }
+
         #region [Task Management & Dispose]
         private void RunTask(Func<Task> taskFunc)
         {
@@ -326,6 +501,8 @@ namespace Elder.DataForge.Models
                 documentContent.Dispose();
             _documentContents.Clear();
         }
+
+       
 
         ~DataForgeModel() => Dispose(false);
         #endregion

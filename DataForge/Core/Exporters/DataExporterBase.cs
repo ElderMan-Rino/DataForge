@@ -14,11 +14,7 @@ namespace Elder.DataForge.Core.Exporters
     {
         private const string ExportingStartText = "Data Exporting Start";
         private const string ExportingEndText = "Data Exporting End";
-        
-        public async Task<bool> TryExportDataAsync()
-        {
-            return false;
-        }
 
+        public abstract Task<bool> TryExportDataAsync(List<TableSchema> schemas, string outputPath);
     }
 }

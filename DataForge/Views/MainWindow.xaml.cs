@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Elder.DataForge
+namespace Elder.DataForge.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
