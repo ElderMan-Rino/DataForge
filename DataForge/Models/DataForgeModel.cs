@@ -323,7 +323,8 @@ namespace Elder.DataForge.Models
 
         public void BuildDlls() => RunTask(BuildDllsAsync);
 
-        private async Task<bool> IsDotNetSdk9Installed()
+        private async Task<bool> IsDotNetS
+            dk9Installed()
         {
             try
             {
@@ -502,7 +503,16 @@ namespace Elder.DataForge.Models
             _documentContents.Clear();
         }
 
-       
+        public void ExportData()
+        {
+            
+        }
+
+        public void UpdateSettingsFromLocal()
+        {
+            _baseOutputPath = Settings.Default.BaseOutputPath;
+            _rootNamespace = Settings.Default.RootNamespace;
+        }
 
         ~DataForgeModel() => Dispose(false);
         #endregion
