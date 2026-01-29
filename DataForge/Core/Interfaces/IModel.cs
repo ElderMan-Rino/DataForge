@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace Elder.DataForge.Core.Interfaces
 {
-    public interface IModel : IDisposable
+    public interface IModel 
     {
         public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; }
     }

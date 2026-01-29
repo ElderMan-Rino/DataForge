@@ -12,8 +12,6 @@ namespace Elder.DataForge.ViewModels
 {
     public class DataForgeViewModel : IViewModel
     {
-        private readonly CompositeDisposable _disposables = new();
-
         private DataForgeModel? _model;
 
         public ObservableCollection<DocumentInfoData>? DocumenttInfoDataCollection => _model?.DocumenttInfoDataCollection;
@@ -23,6 +21,9 @@ namespace Elder.DataForge.ViewModels
         public ICommand CreateElementsCommand { get; }
         public ICommand BuildDLLCommand { get; }
         public ICommand OpenSettingCommand { get; }
+
+        public IObservable<string> OnProgressLevelUpdated => _model?.OnProgressLevelUpdated;
+        public IObservable<float> OnProgressValueUpdated => _model?.OnProgressValueUpdated;
 
         public DataForgeViewModel()
         {
@@ -35,29 +36,31 @@ namespace Elder.DataForge.ViewModels
 
         private void OnLoadDocumentsCommand()
         {
-            _model?.HandleLoadDocument();
+            //_model?.HandleLoadDocument();
         }
 
         private void OnExportDataCommand()
         {
-            _model?.ExportData();
+            //_model?.ExportData();
         }
 
         private void OnCreateElementsCommand()
         {
-            _model?.CreateElements();
+            //_model?.CreateElements();
         }
 
         private void OnBuildDLLCommand()
         {
-            _model?.BuildDlls();
+            //_model?.BuildDlls();
         }
 
         private void OnOpenSettingCommand()
         {
             var settingsWin = OpenSettingWindow();
             if (settingsWin.ShowDialog() == true)
-                _model?.UpdateSettingsFromLocal();
+            {
+                //_model?.UpdateSettingsFromLocal();
+            }
         }
 
         private SettingsWindow OpenSettingWindow()
@@ -66,7 +69,6 @@ namespace Elder.DataForge.ViewModels
             settingsWin.TxtBaseOutputPath.Text = Properties.Settings.Default.BaseOutputPath;
             settingsWin.TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
 
-            // 메인 윈도우를 소유자로 설정 (중앙 정렬을 위함)
             settingsWin.Owner = Application.Current.MainWindow;
             return settingsWin;
         }
@@ -74,11 +76,6 @@ namespace Elder.DataForge.ViewModels
         public void FinalizeBinding()
         {
 
-        }
-
-        public void Dispose()
-        {
-            _disposables.Dispose();
         }
 
         public bool TryBindModel(IModel model)

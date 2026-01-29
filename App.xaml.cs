@@ -70,10 +70,12 @@ namespace Elder
 
         private bool InitializeView()
         {
-            _view = new MainWindow
+            var mainWindow = new MainWindow
             {
-                DataContext = _viewModel 
+                DataContext = _viewModel
             };
+            mainWindow.InitializeView();
+            _view = mainWindow;
             return _view != null;
         }
 
@@ -106,8 +108,6 @@ namespace Elder
 
         protected override void OnExit(ExitEventArgs e)
         {
-            _viewModel?.Dispose();
-            _model?.Dispose();
             base.OnExit(e);
         }
     }

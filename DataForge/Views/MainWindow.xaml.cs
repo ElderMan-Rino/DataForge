@@ -1,4 +1,6 @@
 ﻿using Elder.DataForge.Core.Interfaces;
+using Elder.DataForge.ViewModels;
+using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -12,6 +14,38 @@ namespace Elder.DataForge.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        public void InitializeView()
+        {
+            SetupProgressSubscription();
+        }
+
+        private void SetupProgressSubscription()
+        {
+            var viewModel = (DataContext as IViewModel);
+            if (viewModel == null) 
+                return;
+
+            viewModel.OnProgressLevelUpdated
+                .ObserveOn(SynchronizationContext.Current) // UI 스레드에서 실행 보장
+                .Subscribe(HandleOnProgressLevelUpdated);
+
+            // 2. Progress Value (수치) 업데이트
+            viewModel.OnProgressValueUpdated
+                .ObserveOn(SynchronizationContext.Current)
+                .Subscribe(HandleProgressValueUpdated);
+        }
+
+        private void HandleOnProgressLevelUpdated(string level)
+        {
+            ProgressLevelText.Text = level;
+        }
+
+        private void HandleProgressValueUpdated(float value)
+        {
+            ExportProgressBar.Value = value;
+            ExportProgress.Content = $"{value:F0}%";
         }
 
         private void OnListViewSizeChanged(object sender, SizeChangedEventArgs e)
