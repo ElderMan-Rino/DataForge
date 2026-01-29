@@ -1,5 +1,6 @@
 ﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
+using System.Reactive;
 using System.Text;
 
 namespace Elder.DataForge.Core.CodeGenerators.MessagePack
@@ -41,28 +42,41 @@ namespace Elder.DataForge.Core.CodeGenerators.MessagePack
             WriteLine(sb, $"namespace {TargetDataNamespace}\n{{");
             WriteLine(sb, "\t[MessagePackObject]");
             WriteLine(sb, $"\tpublic readonly struct {name}\n\t{{");
-            foreach (var f in fields) WriteLine(sb, $"\t\t[Key({f.KeyIndex})] public readonly {f.ManagedType} {f.Name};");
+            foreach (var f in fields) 
+                WriteLine(sb, $"\t\t[Key({f.KeyIndex})] public readonly {f.ManagedType} {f.Name};");
             WriteLine(sb, "\n\t\t[SerializationConstructor]");
             sb.Append($"\t\tpublic {name}(").Append(string.Join(", ", fields.Select(f => $"{f.ManagedType} {f.PropertyName}"))).AppendLine(")");
             WriteLine(sb, "\t\t{");
-            foreach (var f in fields) WriteLine(sb, $"\t\t\tthis.{f.Name} = {f.PropertyName};");
+            foreach (var f in fields) 
+                WriteLine(sb, $"\t\t\tthis.{f.Name} = {f.PropertyName};");
             WriteLine(sb, "\t\t}\n\t}\n}");
             return sb.ToString();
         }
 
-        private string GenerateRuntimeContent(string name, List<AnalyzedField> fields)
+        private string GenerateRuntimeContent(string dodName, List<AnalyzedField> fields)
         {
             var sb = new StringBuilder();
-            WriteLine(sb, "using System;\nusing Unity.Collections;\n");
+            WriteLine(sb, "using System;\nusing Unity.Collections;\nusing Unity.Entities;\n");
             WriteLine(sb, $"namespace {TargetDataNamespace}\n{{");
-            WriteLine(sb, "\t[Serializable]\n\t[MessagePack.MessagePackObject]");
-            WriteLine(sb, $"\tpublic readonly struct {name}\n\t{{");
-            foreach (var f in fields) WriteLine(sb, $"\t\t[MessagePack.Key({f.KeyIndex})] public readonly {f.UnmanagedType} {f.Name}; // Size: {f.TotalSize}");
-            WriteLine(sb, "\n\t\t[MessagePack.SerializationConstructor]");
-            sb.Append($"\t\tpublic {name}(").Append(string.Join(", ", fields.Select(f => $"{f.UnmanagedType} {f.PropertyName}"))).AppendLine(")");
-            WriteLine(sb, "\t\t{");
-            foreach (var f in fields) WriteLine(sb, $"\t\t\tthis.{f.Name} = {f.PropertyName};");
-            WriteLine(sb, "\t\t}\n\t}\n}");
+
+            // 1. DOD 행 구조체
+            WriteLine(sb, "\t[Serializable]");
+            WriteLine(sb, $"\tpublic readonly struct {dodName}\n\t{{");
+            foreach (var f in fields)
+            {
+                string type = f.ManagedType == "string" ? "BlobString" : f.UnmanagedType;
+                WriteLine(sb, $"\t\tpublic readonly {type} {f.Name};");
+            }
+            // (생성자 생략...)
+            WriteLine(sb, "\t}\n");
+
+            // 2. BlobTable 루트 구조체 (여기 위치하는 것이 적절합니다)
+            var tableName = dodName.Replace(DODSuffix, "BlobTable");
+            WriteLine(sb, "\t/// <summary> Blob Asset 루트 구조체 </summary>");
+            WriteLine(sb, $"\tpublic readonly struct {tableName}\n\t{{");
+            WriteLine(sb, $"\t\tpublic readonly BlobArray<{dodName}> Rows;"); // DOD 타입을 참조
+            WriteLine(sb, $"\n\t\tpublic {tableName}(BlobArray<{dodName}> rows) => this.Rows = rows;");
+            WriteLine(sb, "\t}\n}");
             return sb.ToString();
         }
 

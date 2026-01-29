@@ -71,8 +71,14 @@ namespace Elder.DataForge.Models
             _rootNamespace = Settings.Default.RootNamespace;
 
             if (string.IsNullOrEmpty(_baseOutputPath))
-            {
                 _baseOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources\MessagePack"));
+            
+            string unityDllPath = Settings.Default.UnityDllPath;
+            if (!string.IsNullOrEmpty(unityDllPath))
+            {
+            `    var path = Environment.GetEnvironmentVariable("PATH") ?? "";
+                if (!path.Contains(unityDllPath))
+                    Environment.SetEnvironmentVariable("PATH", path + ";" + unityDllPath);
             }
         }
 

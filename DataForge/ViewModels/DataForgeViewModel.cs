@@ -63,10 +63,6 @@ namespace Elder.DataForge.ViewModels
         private SettingsWindow OpenSettingWindow()
         {
             var settingsWin = new SettingsWindow();
-            settingsWin.TxtBaseOutputPath.Text = Properties.Settings.Default.BaseOutputPath;
-            settingsWin.TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
-
-            // 메인 윈도우를 소유자로 설정 (중앙 정렬을 위함)
             settingsWin.Owner = Application.Current.MainWindow;
             return settingsWin;
         }

@@ -46,5 +46,17 @@ namespace Elder.DataForge.Properties {
                 this["RootNamespace"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string UnityDllPath {
+            get {
+                return ((string)(this["UnityDllPath"]));
+            }
+            set {
+                this["UnityDllPath"] = value;
+            }
+        }
     }
 }

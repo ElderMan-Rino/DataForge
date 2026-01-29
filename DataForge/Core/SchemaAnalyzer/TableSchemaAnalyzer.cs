@@ -77,7 +77,7 @@ namespace DataForge.DataForge.Core.SchemaAnalyzer
         {
             "int" or "int32" => "int",
             "float" or "single" => "float",
-            "string" or "str" => m == GenerationMode.UnityDOD ? "FixedString32Bytes" : "string",
+            "string" or "str" => m == GenerationMode.UnityDOD ? "BlobString" : "string",
             _ => t
         };
 
