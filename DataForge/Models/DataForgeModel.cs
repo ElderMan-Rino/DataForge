@@ -15,41 +15,64 @@ using System.Reactive.Subjects;
 using System.Text; // Encoding 설정을 위해 필요
 using System.Windows;
 using Elder.DataForge.Properties;
+using Elder.DataForge.Core.DocumentReader;
 
 namespace Elder.DataForge.Models
 {
     internal class DataForgeModel : IModel
     {
-        private IDocumentInfoLoader _infoLoader = new ExcelInfoLoader();
-        private IDocumentContentExtracter _contentExtracter = new ExcelContentExtracter();
+        private IDocumentReader _documentReader = new ExcelDocumentReader();
 
         private CompositeDisposable _disposables = new();
-       
+
+        private bool _tasking = false;
+
         private Subject<string> _updateProgressLevel = new();
         private Subject<float> _updateProgressValue = new();
-        
-        
-        public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; private set; } = new();
+
+        public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection => _documentReader.DocumenttInfoDataCollection;
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
         
         public DataForgeModel()
         {
-            SubscribeToContentLoader();
+            SubscribeToDocumentReader();
         }
-
-        private void SubscribeToContentLoader()
-        {
-            _contentExtracter.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
-            _contentExtracter.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
-        }
-
         private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
+        private void SubscribeToDocumentReader()
+        {
+            _documentReader.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
+            _documentReader.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
+        }
 
+        private void RunTask(Func<Task> taskFunc)
+        {
+            if (_tasking)
+                return;
 
-        public void Handle
+            _tasking = true;
+            Task.Run(async () => await RunTaskAsync(taskFunc));
+        }
+
+        private async Task RunTaskAsync(Func<Task> taskFunc)
+        {
+            try 
+            {
+                await taskFunc.Invoke();
+            }
+            finally 
+            { 
+                _tasking = false; 
+            }
+        }
+
+        public void LoadDocument()
+        {
+            RunTask(_documentReader.ReadDocumentProcessAsync);
+        }
+      
 
         //        private IDocumentInfoLoader _infoLoader = new ExcelInfoLoader();
         //        private IDocumentContentExtracter _contentExtracter = new ExcelContentExtracter();
@@ -466,18 +489,7 @@ namespace Elder.DataForge.Models
         //        }
 
         //        #region [Task Management & Dispose]
-        //        private void RunTask(Func<Task> taskFunc)
-        //        {
-        //            if (_tasking) return;
-        //            _tasking = true;
-        //            Task.Run(async () => await RunTaskAsync(taskFunc));
-        //        }
 
-        //        private async Task RunTaskAsync(Func<Task> taskFunc)
-        //        {
-        //            try { await taskFunc.Invoke(); }
-        //            finally { _tasking = false; }
-        //        }
 
         //        public void Dispose()
         //        {

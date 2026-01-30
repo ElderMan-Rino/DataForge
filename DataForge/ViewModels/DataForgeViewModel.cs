@@ -12,7 +12,7 @@ namespace Elder.DataForge.ViewModels
 {
     public class DataForgeViewModel : IViewModel
     {
-        private DataForgeModel? _model;
+        private IModel? _model;
 
         public ObservableCollection<DocumentInfoData>? DocumenttInfoDataCollection => _model?.DocumenttInfoDataCollection;
 
@@ -36,7 +36,7 @@ namespace Elder.DataForge.ViewModels
 
         private void OnLoadDocumentsCommand()
         {
-            //_model?.HandleLoadDocument();
+            _model?.LoadDocument();
         }
 
         private void OnExportDataCommand()

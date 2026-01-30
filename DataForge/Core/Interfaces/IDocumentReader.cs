@@ -3,13 +3,9 @@ using System.Collections.ObjectModel;
 
 namespace Elder.DataForge.Core.Interfaces
 {
-    public interface IModel 
+    internal interface IDocumentReader : IProgressNotifier
     {
         public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; }
-
-        public IObservable<string> OnProgressLevelUpdated { get; }
-        public IObservable<float> OnProgressValueUpdated { get; }
-
-        public void LoadDocument();
+        public Task<bool> ReadDocumentProcessAsync();
     }
 }
