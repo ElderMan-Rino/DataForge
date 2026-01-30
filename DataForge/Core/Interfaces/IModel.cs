@@ -11,5 +11,6 @@ namespace Elder.DataForge.Core.Interfaces
         public IObservable<float> OnProgressValueUpdated { get; }
 
         public void LoadDocument();
+        public void GenerateSourceCodes();
     }
 }

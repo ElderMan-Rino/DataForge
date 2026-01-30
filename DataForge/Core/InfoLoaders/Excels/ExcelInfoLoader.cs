@@ -1,5 +1,5 @@
 ﻿using Elder.DataForge.Models.Data;
-using Elder.DataForge.Models.Data.Excels;
+using Elder.DataForge.Models.Data.Excel;
 using System.IO;
 
 namespace Elder.DataForge.Core.InfoLoaders.Excels

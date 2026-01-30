@@ -3,8 +3,8 @@ using Elder.DataForge.Models.Data;
 
 namespace Elder.DataForge.Core.Interfaces
 {
-    public interface ISourceCodeGenerator
+    public interface ISourceCodeGenerator : IProgressNotifier
     {
-        Task<List<GeneratedSourceCode>> GenerateAsync(List<TableSchema> schemas);
+        public Task<bool> GenerateSourceCodeAsync(IReadOnlyList<DocumentInfoData> documentInfos);
     }
 }

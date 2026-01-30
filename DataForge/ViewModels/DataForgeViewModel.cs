@@ -18,7 +18,7 @@ namespace Elder.DataForge.ViewModels
 
         public ICommand LoadDocumentsCommand { get; }
         public ICommand ExportDataCommand { get; }
-        public ICommand CreateElementsCommand { get; }
+        public ICommand GenerateSourceCodesCommand { get; }
         public ICommand BuildDLLCommand { get; }
         public ICommand OpenSettingCommand { get; }
 
@@ -29,7 +29,7 @@ namespace Elder.DataForge.ViewModels
         {
             LoadDocumentsCommand = new RelayCommand(OnLoadDocumentsCommand);
             ExportDataCommand = new RelayCommand(OnExportDataCommand);
-            CreateElementsCommand = new RelayCommand(OnCreateElementsCommand);
+            GenerateSourceCodesCommand = new RelayCommand(OnGenerateSourceCodesCommand);
             BuildDLLCommand = new RelayCommand(OnBuildDLLCommand);
             OpenSettingCommand = new RelayCommand(OnOpenSettingCommand);
         }
@@ -44,9 +44,9 @@ namespace Elder.DataForge.ViewModels
             //_model?.ExportData();
         }
 
-        private void OnCreateElementsCommand()
+        private void OnGenerateSourceCodesCommand()
         {
-            //_model?.CreateElements();
+            _model?.GenerateSourceCodes();
         }
 
         private void OnBuildDLLCommand()

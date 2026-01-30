@@ -100,5 +100,10 @@ namespace Elder.DataForge.Core.CodeGenerators.MessagePack
             "string" => expr,
             _ => $"(({type})Enum.Parse(typeof({type}), {expr}))"
         };
+
+        public Task<bool> GenerateSourceCodeAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

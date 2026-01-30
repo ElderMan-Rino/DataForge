@@ -1,27 +1,23 @@
-﻿using DataForge.DataForge.Core.SchemaAnalyzer;
-using Elder.DataForge.Core.CodeGenerators.MessagePack;
-using Elder.DataForge.Core.CodeSaver;
-using Elder.DataForge.Core.ContentLoaders.Excels;
-using Elder.DataForge.Core.InfoLoaders.Excels;
+﻿using Elder.DataForge.Core.CodeGenerators;
+using Elder.DataForge.Core.ContentLoaders.Excel;
+using Elder.DataForge.Core.DocumentReader.Excel;
 using Elder.DataForge.Core.Interfaces;
+using Elder.DataForge.Core.SchemaAnalyzer.Excel;
 using Elder.DataForge.Models.Data;
 using Elder.Reactives.Helpers;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Text; // Encoding 설정을 위해 필요
-using System.Windows;
-using Elder.DataForge.Properties;
-using Elder.DataForge.Core.DocumentReader;
 
 namespace Elder.DataForge.Models
 {
     internal class DataForgeModel : IModel
     {
-        private IDocumentReader _documentReader = new ExcelDocumentReader();
+        private readonly IDocumentReader _documentReader;
+        private readonly ITableSchemaAnalyzer _schemaAnalyzer;
+        private readonly IDocumentContentExtracter _contentExtracter;
+        private readonly ISourceCodeGenerator _codeGenerator;
 
         private CompositeDisposable _disposables = new();
 
@@ -36,8 +32,15 @@ namespace Elder.DataForge.Models
         
         public DataForgeModel()
         {
+            _documentReader = new ExcelDocumentReader();
+            _schemaAnalyzer = new TableSchemaAnalyzer();
+            _contentExtracter = new ExcelContentExtracter();
+            _codeGenerator = new SourceCodeGenerator(_contentExtracter, _schemaAnalyzer);
+
             SubscribeToDocumentReader();
+            SubscribeToCodeGenerator();
         }
+
         private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
@@ -45,6 +48,12 @@ namespace Elder.DataForge.Models
         {
             _documentReader.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
             _documentReader.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
+        }
+
+        private void SubscribeToCodeGenerator()
+        {
+            _codeGenerator.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
+            _codeGenerator.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
         }
 
         private void RunTask(Func<Task> taskFunc)
@@ -72,7 +81,18 @@ namespace Elder.DataForge.Models
         {
             RunTask(_documentReader.ReadDocumentProcessAsync);
         }
-      
+
+        public void GenerateSourceCodes()
+        {
+            RunTask(GenerateSourceCodesAsync);
+        }
+
+        private async Task<bool> GenerateSourceCodesAsync()
+        {
+            var result = await _codeGenerator.GenerateSourceCodeAsync(DocumenttInfoDataCollection);
+            return result;
+        }
+
 
         //        private IDocumentInfoLoader _infoLoader = new ExcelInfoLoader();
         //        private IDocumentContentExtracter _contentExtracter = new ExcelContentExtracter();

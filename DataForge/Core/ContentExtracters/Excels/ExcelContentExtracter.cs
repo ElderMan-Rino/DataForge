@@ -1,11 +1,11 @@
 ﻿using Elder.DataForge.Core.ContentExtracters;
 using Elder.DataForge.Models.Data;
-using Elder.DataForge.Models.Data.Excels;
+using Elder.DataForge.Models.Data.Excel;
 using Elder.Helpers.Commons;
 using OfficeOpenXml;
 using System.IO;
 
-namespace Elder.DataForge.Core.ContentLoaders.Excels
+namespace Elder.DataForge.Core.ContentLoaders.Excel
 {
     public class ExcelContentExtracter : DocumentContentExtracterBase
     {

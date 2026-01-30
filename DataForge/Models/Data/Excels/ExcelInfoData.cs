@@ -1,4 +1,4 @@
-﻿namespace Elder.DataForge.Models.Data.Excels
+﻿namespace Elder.DataForge.Models.Data.Excel
 {
     public class ExcelInfoData : DocumentInfoData
     {

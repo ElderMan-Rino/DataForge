@@ -6,9 +6,9 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Windows.Data;
 
-namespace Elder.DataForge.Core.DocumentReader
+namespace Elder.DataForge.Core.DocumentReader.Excel
 {
-    internal class ExcelDocumentReader : IDocumentReader
+    public class ExcelDocumentReader : IDocumentReader
     {
         private static object _lock = new object();
 

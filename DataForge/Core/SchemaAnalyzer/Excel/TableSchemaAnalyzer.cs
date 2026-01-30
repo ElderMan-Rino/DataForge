@@ -1,11 +1,9 @@
 ﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
-using Elder.DataForge.Models.Data.Excels;
+using Elder.DataForge.Models.Data.Excel;
 using Elder.DataForge.Core.CodeGenerators.MessagePack; // GenerationMode 참조용
-using System.Collections.Generic;
-using System.Linq;
 
-namespace DataForge.DataForge.Core.SchemaAnalyzer
+namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
 {
     public class TableSchemaAnalyzer : ITableSchemaAnalyzer
     {
