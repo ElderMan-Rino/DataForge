@@ -26,12 +26,12 @@ namespace Elder.DataForge.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string BaseOutputPath {
+        public string OutputPath {
             get {
-                return ((string)(this["BaseOutputPath"]));
+                return ((string)(this["OutputPath"]));
             }
             set {
-                this["BaseOutputPath"] = value;
+                this["OutputPath"] = value;
             }
         }
         
@@ -44,6 +44,18 @@ namespace Elder.DataForge.Properties {
             }
             set {
                 this["RootNamespace"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MsBuildPath {
+            get {
+                return ((string)(this["MsBuildPath"]));
+            }
+            set {
+                this["MsBuildPath"] = value;
             }
         }
     }

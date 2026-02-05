@@ -57,18 +57,12 @@ namespace Elder.DataForge.ViewModels
         private void OnOpenSettingCommand()
         {
             var settingsWin = OpenSettingWindow();
-            if (settingsWin.ShowDialog() == true)
-            {
-                //_model?.UpdateSettingsFromLocal();
-            }
+            settingsWin.ShowDialog();
         }
 
         private SettingsWindow OpenSettingWindow()
         {
             var settingsWin = new SettingsWindow();
-            settingsWin.TxtBaseOutputPath.Text = Properties.Settings.Default.BaseOutputPath;
-            settingsWin.TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
-
             settingsWin.Owner = Application.Current.MainWindow;
             return settingsWin;
         }

@@ -1,36 +1,35 @@
-﻿using Elder.DataForge.Core.CodeGenerators.MessagePack;
+﻿using Elder.DataForge.Core.CodeGenerators;
 using Elder.DataForge.Core.Interfaces;
-using System;
-using System.Collections.Generic;
+using Elder.DataForge.Properties;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Elder.DataForge.Core.CodeSaver
 {
     public class FileSourceCodeSaver : ISourceCodeSaver
     {
-        public async Task<bool> SaveAsync(List<GeneratedSourceCode> sourceCodes, string outputDirectory)
+        public async Task<bool> ExportAsync(List<GeneratedSourceCode> sourceCodes)
         {
             try
             {
                 if (sourceCodes == null || sourceCodes.Count == 0)
                     return false;
 
-                // 폴더가 없으면 생성
+                string outputDirectory = Settings.Default.OutputPath;
+                if (string.IsNullOrEmpty(outputDirectory))
+                    return false;
+
                 if (!Directory.Exists(outputDirectory))
                     Directory.CreateDirectory(outputDirectory);
 
                 foreach (var code in sourceCodes)
                 {
-                    string fullPath = Path.Combine(outputDirectory, code.FileName);
+                    string forlderPath = Path.Combine(outputDirectory, code.category.ToString());
+                    if (!Directory.Exists(forlderPath))
+                        Directory.CreateDirectory(forlderPath);
 
-                    // 1. 여기서 줄 바꿈 정규화 (CRLF 강제)를 처리합니다.
-                    string normalized = code.Content.Replace("\r\n", "\n").Replace("\n", "\r\n");
-
-                    // 2. UTF-8 with BOM으로 저장 (Visual Studio 경고 방지)
+                    string fullPath = Path.Combine(forlderPath, code.fileName);
+                    string normalized = code.content.Replace("\r\n", "\n").Replace("\n", "\r\n");
                     await File.WriteAllTextAsync(fullPath, normalized, Encoding.UTF8);
                 }
                 return true;

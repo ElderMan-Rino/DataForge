@@ -1,7 +1,9 @@
 ﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using Elder.DataForge.Models.Data.Excel;
-using Elder.DataForge.Core.CodeGenerators.MessagePack; // GenerationMode 참조용
+using Elder.DataForge.Core.CodeGenerators.MessagePack;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
 {
@@ -17,15 +19,13 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
 
                 foreach (var sheet in excelData.SheetDatas.Values)
                 {
-                    // 1. 시트의 필드 구조 분석
                     var analyzedFields = AnalyzeSheetFields(sheet);
 
-                    // 2. 통합 설계도(TableSchema) 생성
                     var schema = new TableSchema
                     {
                         TableName = sheet.SheetName,
                         AnalyzedFields = analyzedFields,
-                        RawRows = sheet.Rows // 실제 데이터 행들도 함께 저장 (바이너리 추출용)
+                        RawRows = sheet.Rows
                     };
 
                     schemas.Add(schema);
@@ -37,21 +37,27 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
 
         private List<AnalyzedField> AnalyzeSheetFields(ExcelSheetData sheetData)
         {
-            // 기존에 작성하신 분석 로직을 그대로 사용합니다.
             var groups = sheetData.FieldDefinitions.GroupBy(x => x.VariableName).ToList();
+
             var temp = groups.Select(g => {
                 var first = g.First();
+
+                // 1. 기본 타입 결정
                 string mBase = ConvertType(first.VariableType, GenerationMode.SharedDTO);
                 string uBase = ConvertType(first.VariableType, GenerationMode.UnityDOD);
+
                 bool isList = g.Count() > 1;
-                string uType = isList ? GetFixedListType(uBase, g.Count()) : uBase;
+
+                // 2. UnityDOD용 타입 결정 (FixedList -> BlobArray)
+                string uType = isList ? $"Unity.Entities.BlobArray<{uBase}>" : uBase;
 
                 return new
                 {
                     Name = g.Key,
                     MType = isList ? $"List<{mBase}>" : mBase,
                     UType = uType,
-                    Size = isList ? GetFixedListSize(uType) : GetTypeSize(uBase),
+                    // 3. 사이즈 계산 (Blob은 참조값이므로 포인터 사이즈인 8바이트로 계산)
+                    Size = isList ? 8 : GetTypeSize(uBase),
                     IsList = isList,
                     Order = g.Min(f => f.FieldOrder),
                     Indices = g.Select(f => f.FieldOrder - 1).ToList()
@@ -70,22 +76,26 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
             )).ToList();
         }
 
-        // --- 기존 헬퍼 메서드들 유지 ---
         private string ConvertType(string t, GenerationMode m) => t.ToLower() switch
         {
             "int" or "int32" => "int",
             "float" or "single" => "float",
-            "string" or "str" => m == GenerationMode.UnityDOD ? "FixedString32Bytes" : "string",
+            "double" => "double",
+            "long" or "int64" => "long",
+            "bool" or "boolean" => "bool",
+            // string은 UnityDOD일 때 우리가 만든 BlobString 사용
+            "string" or "str" => m == GenerationMode.UnityDOD ? "BlobString" : "string",
             _ => t
         };
 
-        private string GetFixedListType(string type, int count)
+        // Blob 기반에서는 리스트의 데이터 개수와 상관없이 구조체 내부 크기는 참조 정보(OffsetPtr) 사이즈임
+        private int GetTypeSize(string t) => t switch
         {
-            int size = (GetTypeSize(type) * count) + 2;
-            return size <= 32 ? $"FixedList32Bytes<{type}>" : size <= 64 ? $"FixedList64Bytes<{type}>" : $"FixedList128Bytes<{type}>";
-        }
-
-        private int GetFixedListSize(string t) => t.Contains("32") ? 32 : t.Contains("64") ? 64 : 128;
-        private int GetTypeSize(string t) => t.Contains("64") || t == "double" ? 8 : t.Contains("32") || t == "float" ? 4 : 1;
+            "double" or "long" => 8,
+            "int" or "float" => 4,
+            "bool" => 1,
+            "BlobString" => 8, // BlobString 내부에도 BlobPtr이 들어감
+            _ => 4 // 기본 포인터나 Enum 등
+        };
     }
 }

@@ -105,7 +105,7 @@ namespace Elder.DataForge.Models
         //        private string _baseOutputPath;
         //        private string _rootNamespace;
 
-        //        private const string DodProjectTemplate =
+        //       private const string DodProjectTemplate =
         //@"<Project Sdk=""Microsoft.NET.Sdk"">
         //  <PropertyGroup>
         //    <TargetFramework>netstandard2.1</TargetFramework>
@@ -113,7 +113,7 @@ namespace Elder.DataForge.Models
         //    <Nullable>enable</Nullable>
         //    <AssemblyName>{0}</AssemblyName>
         //  </PropertyGroup>
-        //  <ItemGroup>
+        //  <ItemGroup> 
         //    <PackageReference Include=""MessagePack"" Version=""2.5.140"" />
         //  </ItemGroup>
         //</Project>";

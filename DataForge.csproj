@@ -36,7 +36,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Resources\" />
-	</ItemGroup>
+    <Compile Remove="Resources\**\*.cs" />
+    
+    <None Remove="Resources\**\*.cs" />
+</ItemGroup>
 
 </Project>

@@ -1,24 +1,60 @@
-﻿using Elder.DataForge.Core.ContentExtracters;
+﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using Elder.DataForge.Models.Data.Excel;
 using Elder.Helpers.Commons;
 using OfficeOpenXml;
 using System.IO;
+using System.Reactive.Subjects;
 
 namespace Elder.DataForge.Core.ContentLoaders.Excel
 {
-    public class ExcelContentExtracter : DocumentContentExtracterBase
+    public class ExcelContentExtracter : IDocumentContentExtracter
     {
+        private const string ExtractingStartText = "Data Extracting Start";
+        private const string ExtractingEndText = "Data Extracting End";
+        private const string ExtractingProgressText = "Extracting : ";
+
         private const string Colon = ":";
         private const string DataName = "DataName";
 
-        protected override DocumentContentData ExtractDocumentContents(DocumentInfoData documentInfo)
+        private Subject<string> _updateProgressLevel = new();
+        private Subject<float> _updateProgressValue = new();
+
+        public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
+        public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
+
+        private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
+        private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+ 
+        public async Task<Dictionary<string, DocumentContentData>> ExtractDocumentContentDataAsync(IEnumerable<DocumentInfoData> documentInfoData)
         {
-            return ExtractExcelContents(documentInfo.Name, documentInfo.Path);
+            UpdateProgressLevel(ExtractingStartText);
+            UpdateProgressValue(0f);
+
+            var currentCount = 0;
+            var totalLength = documentInfoData.Count();
+            var extractedData = new Dictionary<string, DocumentContentData>();
+            foreach (var info in documentInfoData)
+            {
+                var contentData = ExtractExcelContents(info);
+                if (contentData != null)
+                {
+                    extractedData.Add(contentData.Name, contentData);
+                    UpdateProgressLevel($"{ExtractingProgressText} {contentData.Name}");
+                }
+                await Task.Yield();
+
+                var currentProgress = (float)++currentCount / (float)totalLength;
+                UpdateProgressValue(currentProgress);
+            }
+            UpdateProgressLevel(ExtractingEndText);
+            return extractedData;
         }
 
-        private ExcelContentData ExtractExcelContents(string fileName, string directory)
+        private ExcelContentData ExtractExcelContents(DocumentInfoData info)
         {
+            string fileName = info.Name;
+            string directory = info.Path;
             string filePath = Path.Combine(directory, fileName);
             if (!File.Exists(filePath))
                 return null;
@@ -51,12 +87,7 @@ namespace Elder.DataForge.Core.ContentLoaders.Excel
                         for (int col = 1; col <= colCount; col++)
                         {
                             string cellText = worksheet.Cells[row, col].Text;
-
-                            // 1. 기존 로직 수행 (필드 정의 및 컬럼별 데이터 수집)
                             ProcessCell(cellText, col, ref dataName, fieldDefinitions, fieldValues);
-
-                            // 2. 데이터 행 판별 로직
-                            // 셀 값이 비어있지 않고, 정의부(VariableInfo)나 메타데이터(DataName)가 아닐 경우 데이터 행으로 간주
                             if (!string.IsNullOrEmpty(cellText) &&
                                 !TryExtractVariableInfo(cellText, out _) &&
                                 !TryExtractDataName(cellText, out _))
@@ -73,8 +104,6 @@ namespace Elder.DataForge.Core.ContentLoaders.Excel
                             rows.Add(rowData);
                         }
                     }
-
-                    // [수정] 업데이트된 ExcelSheetData 생성자 호출 (rows 포함)
                     sheetDatas.Add(sheetName, new ExcelSheetData(sheetName, dataName, fieldDefinitions, fieldValues, rows));
                 }
             }
