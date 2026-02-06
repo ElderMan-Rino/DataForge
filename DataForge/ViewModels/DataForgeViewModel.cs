@@ -41,7 +41,7 @@ namespace Elder.DataForge.ViewModels
 
         private void OnExportDataCommand()
         {
-            //_model?.ExportData();
+            _model?.ExportData();
         }
 
         private void OnGenerateSourceCodesCommand()

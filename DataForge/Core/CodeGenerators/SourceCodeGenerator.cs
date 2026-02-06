@@ -1,17 +1,20 @@
 ﻿using Elder.DataForge.Core.CodeGenerators.MessagePack;
 using Elder.DataForge.Core.CodeSaver;
 using Elder.DataForge.Core.Interfaces;
-using Elder.DataForge.Core.PostProcessor;
 using Elder.DataForge.Core.PostProcessor.MessagePack;
 using Elder.DataForge.Models.Data;
-using Elder.DataForge.Properties;
-using System.IO;
+using Elder.Reactives.Helpers;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
+
 
 namespace Elder.DataForge.Core.CodeGenerators
 {
     public class SourceCodeGenerator : ISourceCodeGenerator
     {
+        private CompositeDisposable _disposables = new();
+
         private IDocumentContentExtracter _contentExtracter;
         private ITableSchemaAnalyzer _schemaAnalyzer;
         private ISourceCodeSaver _codeSaver;
@@ -24,6 +27,8 @@ namespace Elder.DataForge.Core.CodeGenerators
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
 
+        private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
+        private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
         public SourceCodeGenerator(IDocumentContentExtracter contentExtracter, ITableSchemaAnalyzer schemaAnalyzer)
         {
@@ -31,7 +36,18 @@ namespace Elder.DataForge.Core.CodeGenerators
             _schemaAnalyzer = schemaAnalyzer;
             _codeEmitter = new MessagePackSourceEmitter();
             _codeSaver = new FileSourceCodeSaver();
-            _postProcessor = new();
+            _postProcessor = new MessagePackPostProcessor();
+
+            SubscribeToIProgressNotifiers(_codeEmitter, _codeSaver, _contentExtracter, _postProcessor);
+        }
+
+        private void SubscribeToIProgressNotifiers(params IProgressNotifier[] notifiers)
+        {
+            foreach (var notifier in notifiers)
+            {
+                notifier.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
+                notifier.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
+            }
         }
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
@@ -95,12 +111,7 @@ namespace Elder.DataForge.Core.CodeGenerators
 
         private async Task RunPostProcessingServiceAsync()
         {
-            string dod
-            string targetSourcePath = Path.Combine(Settings.Default.OutputPath, "DOD");
-            string mpcOutputPath = "";
-            string targetNamespace = "";
-            bool generateDll = false;
-            await _postProcessor.PostProcessAsync(new PostProcessContext(targetSourcePath, mpcOutputPath, targetNamespace, generateDll));
+            await _postProcessor.PostProcessAsync();
         }
     }
 }

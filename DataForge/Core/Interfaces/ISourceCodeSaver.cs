@@ -2,7 +2,7 @@
 
 namespace Elder.DataForge.Core.Interfaces
 {
-    public interface ISourceCodeSaver
+    public interface ISourceCodeSaver : IProgressNotifier
     {
         public Task<bool> ExportAsync(List<GeneratedSourceCode> generatedSources);
     }

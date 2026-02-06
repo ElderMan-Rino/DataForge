@@ -1,11 +1,9 @@
 ﻿using Elder.DataForge.Core.Common.Const.MemoryPack;
 using Elder.DataForge.Core.Interfaces;
-using OfficeOpenXml.Utils;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive.Subjects;
 using System.Text;
-
 
 namespace Elder.DataForge.Core.PostProcessor.MessagePack
 {
@@ -21,7 +19,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
 
-        public async Task<bool> PostProcessAsync(PostProcessContext context)
+        public async Task<bool> PostProcessAsync()
         {
             try
             {

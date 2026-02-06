@@ -2,8 +2,8 @@
 
 namespace Elder.DataForge.Core.Interfaces
 {
-    public interface IDataExporter : IProgressNotifier, IDisposable
+    public interface IDataExporter : IProgressNotifier
     {
-        public Task<bool> TryExportDataAsync(List<TableSchema> schemas, string outputPath);
+        public Task<bool> ExportDataAsync(IReadOnlyList<DocumentInfoData> documentInfos);
     }
 }

@@ -12,5 +12,6 @@ namespace Elder.DataForge.Core.Interfaces
 
         public void LoadDocument();
         public void GenerateSourceCodes();
+        public void ExportData();
     }
 }
