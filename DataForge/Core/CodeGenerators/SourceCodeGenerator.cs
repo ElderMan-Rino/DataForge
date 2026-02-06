@@ -26,9 +26,10 @@ namespace Elder.DataForge.Core.CodeGenerators
 
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
-
-        private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
-        private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
+        private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void OnSourceProgressLevelUpdated(string progressLevel) => UpdateProgressLevel(progressLevel);
+        private void OnSourceProgressValueUpdated(float progressValue) => UpdateProgressValue(progressValue);
 
         public SourceCodeGenerator(IDocumentContentExtracter contentExtracter, ITableSchemaAnalyzer schemaAnalyzer)
         {
@@ -50,9 +51,7 @@ namespace Elder.DataForge.Core.CodeGenerators
             }
         }
 
-        private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
-        private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
-
+      
         public async Task<bool> GenerateSourceCodeAsync(IReadOnlyList<DocumentInfoData> documentInfos)
         {
             UpdateProgressLevel("GenerateSourceCode Start");

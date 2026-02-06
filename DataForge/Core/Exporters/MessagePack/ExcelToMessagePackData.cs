@@ -1,18 +1,18 @@
 ﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
-using Elder.DataForge.Models.Data.Excel;
+using Elder.Reactives.Helpers;
 using MessagePack;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Threading.Tasks;
 
 namespace Elder.DataForge.Core.Exporters.MessagePack
 {
     public class ExcelToMessagePackData : IDataExporter
     {
+        private CompositeDisposable _disposables = new();
+
         private readonly IDocumentContentExtracter _contentExtracter;
         private readonly ITableSchemaAnalyzer _schemaAnalyzer;
 
@@ -24,11 +24,24 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
+        private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
         public ExcelToMessagePackData(IDocumentContentExtracter contentExtracter, ITableSchemaAnalyzer schemaAnalyzer)
         {
             _contentExtracter = contentExtracter;
             _schemaAnalyzer = schemaAnalyzer;
+
+            SubscribeToIProgressNotifiers(_contentExtracter);
+        }
+
+        private void SubscribeToIProgressNotifiers(params IProgressNotifier[] notifiers)
+        {
+            foreach (var notifier in notifiers)
+            {
+                notifier.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
+                notifier.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
+            }
         }
 
         public async Task<bool> ExportDataAsync(IReadOnlyList<DocumentInfoData> documentInfos)
