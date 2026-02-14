@@ -1,6 +1,6 @@
-﻿namespace Elder.DataForge.Core.Common.Const.MemoryPack
+﻿namespace Elder.DataForge.Core.Common.Const.MessagePack
 {
-    public static class MemoryPackConsts
+    public static class MessagePackConsts
     {
         public const string Prefix = "MsgPack";
         public const string DTOSuffix = "DTO";

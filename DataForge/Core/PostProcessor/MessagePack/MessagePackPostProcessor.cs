@@ -1,5 +1,5 @@
 ﻿using Elder.DataForge.Core.Common.Const;
-using Elder.DataForge.Core.Common.Const.MemoryPack;
+using Elder.DataForge.Core.Common.Const.MessagePack;
 using Elder.DataForge.Core.Interfaces;
 using System.Diagnostics;
 using System.IO;
@@ -122,9 +122,9 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
         {
             try
             {
-                string inputPath = Path.Combine(Properties.Settings.Default.OutputPath, MemoryPackConsts.DODSuffix);
+                string inputPath = Path.Combine(Properties.Settings.Default.OutputPath, MessagePackConsts.DODSuffix);
                 string resolverFolderPath = Path.Combine(Properties.Settings.Default.OutputPath, DataForgeConsts.Resolver);
-                string outputPath = Path.Combine(resolverFolderPath, MemoryPackConsts.ResolverFileName);
+                string outputPath = Path.Combine(resolverFolderPath, MessagePackConsts.ResolverFileName);
                 string nameSpace = Properties.Settings.Default.RootNamespace;
                 // 1. MSBuild 실제 경로 탐색
                 string projectRoot = Properties.Settings.Default.OutputPath;
@@ -223,7 +223,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 if (!Directory.Exists(targetPath))
                     Directory.CreateDirectory(targetPath);
 
-                string content = string.Format(MemoryPackConsts.DodProjectTemplate, assemblyName, additionalTags);
+                string content = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, additionalTags);
                 string filePath = Path.Combine(targetPath, $"{assemblyName}.csproj");
 
                 // UTF8 with BOM은 가끔 외부 툴에서 문제를 일으키므로, 인코딩 선택에 유의하세요.

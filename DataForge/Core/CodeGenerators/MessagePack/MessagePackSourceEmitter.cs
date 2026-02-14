@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.Common.Const.MemoryPack;
+﻿using Elder.DataForge.Core.Common.Const.MessagePack;
 using Elder.DataForge.Core.Commons.Enum;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
@@ -50,8 +50,8 @@ namespace Elder.DataForge.Core.CodeGenerators.MessagePack
 
                 UpdateProgressLevel($"Generating codes for Table: {schema.TableName} ({i + 1}/{schemas.Count})");
 
-                var dtoName = $"{MemoryPackConsts.Prefix}{schema.TableName}{MemoryPackConsts.DTOSuffix}";
-                var dodName = $"{MemoryPackConsts.Prefix}{schema.TableName}{MemoryPackConsts.DODSuffix}";
+                var dtoName = $"{MessagePackConsts.Prefix}{schema.TableName}{MessagePackConsts.DTOSuffix}";
+                var dodName = $"{MessagePackConsts.Prefix}{schema.TableName}{MessagePackConsts.DODSuffix}";
 
                 generatedFiles.Add(new GeneratedSourceCode($"{dtoName}.cs", GenerateModelContent(dtoName, schema.AnalyzedFields), SourceCategory.Dto));
                 generatedFiles.Add(new GeneratedSourceCode($"{dtoName}.Parser.cs", GenerateParserContent(dtoName, schema.AnalyzedFields), SourceCategory.Parser));
