@@ -1,4 +1,6 @@
-﻿using Elder.DataForge.Core.Interfaces;
+﻿using Elder.DataForge.Core.Common.Const;
+using Elder.DataForge.Core.Interfaces;
+using Elder.DataForge.Core.Validators.MessagePack;
 using Elder.DataForge.Models.Data;
 using Elder.Reactives.Helpers;
 using MessagePack;
@@ -12,6 +14,7 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
     public class ExcelToMessagePackData : IDataExporter
     {
         private CompositeDisposable _disposables = new();
+        private readonly IExportValidator _validator;
 
         private readonly IDocumentContentExtracter _contentExtracter;
         private readonly ITableSchemaAnalyzer _schemaAnalyzer;
@@ -31,8 +34,9 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
         {
             _contentExtracter = contentExtracter;
             _schemaAnalyzer = schemaAnalyzer;
+            _validator = new MessagePackMappingValidator();
 
-            SubscribeToIProgressNotifiers(_contentExtracter);
+            SubscribeToIProgressNotifiers(_contentExtracter, _validator);
         }
 
         private void SubscribeToIProgressNotifiers(params IProgressNotifier[] notifiers)
@@ -62,7 +66,7 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
                 }
 
                 // 저장 경로 설정 (Settings 등에서 가져오도록 확장 가능)
-                string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportedData");
+                string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DataForgeConsts.DataExportFolder);
                 if (!Directory.Exists(outputPath)) Directory.CreateDirectory(outputPath);
 
                 for (int i = 0; i < schemas.Count; i++)
@@ -91,6 +95,13 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
 
                     // 3. MessagePack 직렬화 및 파일 저장
                     byte[] bin = MessagePackSerializer.Serialize(serializedTable);
+
+                    if (!await _validator.ValidateAsync(bin, schema))
+                    {
+                        UpdateProgressLevel($"Export aborted due to validation failure: {schema.TableName}");
+                        return false;
+                    }
+
                     await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{schema.TableName}.bytes"), bin);
 
                     UpdateProgressValue((float)(i + 1) / schemas.Count * 100f);

@@ -1,4 +1,5 @@
-﻿using Elder.DataForge.Core.Common.Const.MemoryPack;
+﻿using Elder.DataForge.Core.Common.Const;
+using Elder.DataForge.Core.Common.Const.MemoryPack;
 using Elder.DataForge.Core.Interfaces;
 using System.Diagnostics;
 using System.IO;
@@ -42,7 +43,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 string projectRoot = Properties.Settings.Default.OutputPath;
                 string tempProjectDir = Path.Combine(projectRoot, "_TempMpcProject");
 
-                string csprojPath = await GenerateCsprojFile(tempProjectDir, MemoryPackConsts.AssemblyName);
+                string csprojPath = await GenerateCsprojFile(tempProjectDir, DataForgeConsts.AssemblyName);
                 UpdateProgressValue(0.5f);
 
                 // 3. mpc.exe 실행 (Resolver 생성)
@@ -122,7 +123,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             try
             {
                 string inputPath = Path.Combine(Properties.Settings.Default.OutputPath, MemoryPackConsts.DODSuffix);
-                string resolverFolderPath = Path.Combine(Properties.Settings.Default.OutputPath, MemoryPackConsts.Resolver);
+                string resolverFolderPath = Path.Combine(Properties.Settings.Default.OutputPath, DataForgeConsts.Resolver);
                 string outputPath = Path.Combine(resolverFolderPath, MemoryPackConsts.ResolverFileName);
                 string nameSpace = Properties.Settings.Default.RootNamespace;
                 // 1. MSBuild 실제 경로 탐색

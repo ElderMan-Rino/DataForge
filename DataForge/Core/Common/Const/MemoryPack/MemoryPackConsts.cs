@@ -6,7 +6,6 @@
         public const string DTOSuffix = "DTO";
         public const string DODSuffix = "DOD";
         public const string ResolverFileName = "MessagePackGeneratedResolver.cs";
-        public const string Resolver = "Resolvers";
 
         public const string DodProjectTemplate = @"<Project Sdk=""Microsoft.NET.Sdk"">
           <PropertyGroup>
@@ -19,7 +18,5 @@
             <PackageReference Include=""MessagePack"" Version=""2.5.140"" />
           </ItemGroup>
         </Project>";
-        
-        public const string AssemblyName = "Elder.Generated.Data";
     }
 }
