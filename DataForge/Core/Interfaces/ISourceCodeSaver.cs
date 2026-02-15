@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.CodeGenerators;
+﻿using Elder.DataForge.Core.CodeGenerator;
 
 namespace Elder.DataForge.Core.Interfaces
 {

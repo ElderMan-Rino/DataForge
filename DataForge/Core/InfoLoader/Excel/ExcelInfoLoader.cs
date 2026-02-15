@@ -2,7 +2,7 @@
 using Elder.DataForge.Models.Data.Excel;
 using System.IO;
 
-namespace Elder.DataForge.Core.InfoLoaders.Excels
+namespace Elder.DataForge.Core.InfoLoader.Excel
 {
     public class ExcelInfoLoader : DocumentInfoLoaderBase
     {

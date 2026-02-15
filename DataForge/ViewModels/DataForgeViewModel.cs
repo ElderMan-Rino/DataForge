@@ -51,7 +51,7 @@ namespace Elder.DataForge.ViewModels
 
         private void OnBuildDLLCommand()
         {
-            //_model?.BuildDlls();
+            _model?.BuildDll();
         }
 
         private void OnOpenSettingCommand()

@@ -6,7 +6,7 @@ using OfficeOpenXml;
 using System.IO;
 using System.Reactive.Subjects;
 
-namespace Elder.DataForge.Core.ContentLoaders.Excel
+namespace Elder.DataForge.Core.ContentExtracter.Excel
 {
     public class ExcelContentExtracter : IDocumentContentExtracter
     {

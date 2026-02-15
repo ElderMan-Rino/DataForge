@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.CodeGenerators;
+﻿using Elder.DataForge.Core.CodeGenerator;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Properties;
 using System.IO;

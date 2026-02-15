@@ -1,7 +1,8 @@
-﻿using Elder.DataForge.Core.CodeGenerators;
-using Elder.DataForge.Core.ContentLoaders.Excel;
+﻿using Elder.DataForge.Core.CodeGenerator;
+using Elder.DataForge.Core.ContentExtracter.Excel;
+using Elder.DataForge.Core.DataExporter.MessagePack;
+using Elder.DataForge.Core.DLLBuilder;
 using Elder.DataForge.Core.DocumentReader.Excel;
-using Elder.DataForge.Core.Exporters.MessagePack;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Core.SchemaAnalyzer.Excel;
 using Elder.DataForge.Models.Data;
@@ -20,6 +21,7 @@ namespace Elder.DataForge.Models
         private readonly IDocumentContentExtracter _contentExtracter;
         private readonly ISourceCodeGenerator _codeGenerator;
         private readonly IDataExporter _dataExporter;
+        private readonly IDllBuilder _dllBuilder;
 
         private CompositeDisposable _disposables = new();
 
@@ -39,6 +41,7 @@ namespace Elder.DataForge.Models
             _contentExtracter = new ExcelContentExtracter();
             _codeGenerator = new SourceCodeGenerator(_contentExtracter, _schemaAnalyzer);
             _dataExporter = new ExcelToMessagePackData(_contentExtracter, _schemaAnalyzer);
+            _dllBuilder = new DllBuilder();
 
             SubscribeToIProgressNotifiers(_codeGenerator, _dataExporter);
         }
@@ -100,6 +103,19 @@ namespace Elder.DataForge.Models
         private async Task<bool> ExportDataAsync()
         {
             var result = await _dataExporter.ExportDataAsync(DocumenttInfoDataCollection);
+            return result;
+        }
+
+        public void BuildDll()
+        {
+            RunTask(BuildDllAsync);
+        }
+
+        private async Task<bool> BuildDllAsync()
+        {
+            var sourceFolderPath = string.Empty;
+            var outputFolderPath = string.Empty;
+            var result = await _dllBuilder.BuildDllAsync(sourceFolderPath, outputFolderPath);
             return result;
         }
     }

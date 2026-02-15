@@ -3,7 +3,7 @@ using Elder.DataForge.Core.Notifiers;
 using Elder.DataForge.Models.Data;
 using Elder.Helpers.Commons;
 
-namespace Elder.DataForge.Core.Converters
+namespace Elder.DataForge.Core.Converter
 {
     public abstract class DataConverterBase : ProgressReporter, IDataConverter
     {

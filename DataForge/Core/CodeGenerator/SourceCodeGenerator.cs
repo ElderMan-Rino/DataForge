@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.CodeGenerators.MessagePack;
+﻿using Elder.DataForge.Core.CodeGenerator.MessagePack;
 using Elder.DataForge.Core.CodeSaver;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Core.PostProcessor.MessagePack;
@@ -9,7 +9,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 
-namespace Elder.DataForge.Core.CodeGenerators
+namespace Elder.DataForge.Core.CodeGenerator
 {
     public class SourceCodeGenerator : ISourceCodeGenerator
     {

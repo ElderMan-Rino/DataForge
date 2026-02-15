@@ -41,4 +41,8 @@
     <None Remove="Resources\**\*.cs" />
 </ItemGroup>
 
+	<ItemGroup>
+	  <None Remove="DataForge\Core\DLLBuilder\1e0laevf.gxe~" />
+	</ItemGroup>
+
 </Project>

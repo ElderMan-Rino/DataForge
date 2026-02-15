@@ -9,7 +9,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
-namespace Elder.DataForge.Core.Exporters.MessagePack
+namespace Elder.DataForge.Core.DataExporter.MessagePack
 {
     public class ExcelToMessagePackData : IDataExporter
     {
@@ -27,6 +27,7 @@ namespace Elder.DataForge.Core.Exporters.MessagePack
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+
         private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void OnSourceProgressValueUpdated(float progressValue) => _updateProgressValue.OnNext(progressValue);
 

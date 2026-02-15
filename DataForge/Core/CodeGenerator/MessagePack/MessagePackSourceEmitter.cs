@@ -6,7 +6,7 @@ using Elder.DataForge.Properties;
 using System.Reactive.Subjects;
 using System.Text;
 
-namespace Elder.DataForge.Core.CodeGenerators.MessagePack
+namespace Elder.DataForge.Core.CodeGenerator.MessagePack
 {
     public enum GenerationMode { SharedDTO, UnityDOD }
 

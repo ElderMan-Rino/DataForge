@@ -1,7 +1,7 @@
 ﻿using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using Elder.DataForge.Models.Data.Excel;
-using Elder.DataForge.Core.CodeGenerators.MessagePack;
+using Elder.DataForge.Core.CodeGenerator.MessagePack;
 using System.Collections.Generic;
 using System.Linq;
 

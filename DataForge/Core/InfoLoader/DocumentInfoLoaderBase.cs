@@ -3,7 +3,7 @@ using Elder.DataForge.Models.Data;
 using Microsoft.Win32;
 using System.Reactive.Linq;
 
-namespace Elder.DataForge.Core.InfoLoaders
+namespace Elder.DataForge.Core.InfoLoader
 {
     public abstract class DocumentInfoLoaderBase : IDocumentInfoLoader
     {

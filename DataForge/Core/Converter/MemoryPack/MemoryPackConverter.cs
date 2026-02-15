@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.Converters;
+﻿using Elder.DataForge.Core.Converter;
 using Elder.DataForge.Models.Data;
 using Elder.DataForge.Models.Data.Excel;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elder.DataForge.Core.Converters.MemoryPack
+namespace Elder.DataForge.Core.Converter.MemoryPack
 {
     internal class MemoryPackConverter : DataConverterBase
     {

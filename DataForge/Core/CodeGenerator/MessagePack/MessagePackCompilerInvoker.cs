@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elder.DataForge.Core.CodeGenerators.MessagePack
+namespace Elder.DataForge.Core.CodeGenerator.MessagePack
 {
     public static class MessagePackCompilerInvoker
     {

@@ -1,4 +1,4 @@
-﻿using Elder.DataForge.Core.InfoLoaders.Excels;
+﻿using Elder.DataForge.Core.InfoLoader.Excel;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using System.Collections.ObjectModel;
