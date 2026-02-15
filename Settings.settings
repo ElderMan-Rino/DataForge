@@ -11,7 +11,7 @@
     <Setting Name="MsBuildPath" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="OutputDLLName" Type="System.String" Scope="User">
+    <Setting Name="OutputDllName" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>

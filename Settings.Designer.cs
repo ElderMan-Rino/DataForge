@@ -62,12 +62,12 @@ namespace Elder.DataForge.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string OutputDLLName {
+        public string OutputDllName {
             get {
-                return ((string)(this["OutputDLLName"]));
+                return ((string)(this["OutputDllName"]));
             }
             set {
-                this["OutputDLLName"] = value;
+                this["OutputDllName"] = value;
             }
         }
     }

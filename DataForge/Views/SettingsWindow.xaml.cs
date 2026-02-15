@@ -25,7 +25,7 @@ namespace Elder.DataForge.Views
             TxtBaseOutputPath.Text = Properties.Settings.Default.OutputPath;
             TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
             TxtMsBuildPath.Text = Properties.Settings.Default.MsBuildPath;
-            TxtOutputDLLName.Text = Properties.Settings.Default.OutputDLLName;
+            TxtOutputDllName.Text = Properties.Settings.Default.OutputDllName;
         }
 
         // 기본 출력 경로 선택 (Tools/Output)
@@ -42,7 +42,7 @@ namespace Elder.DataForge.Views
             Properties.Settings.Default.OutputPath = TxtBaseOutputPath.Text;
             Properties.Settings.Default.RootNamespace = TxtRootNamespace.Text;
             Properties.Settings.Default.MsBuildPath = TxtMsBuildPath.Text;
-            Properties.Settings.Default.OutputDLLName = TxtOutputDLLName.Text;
+            Properties.Settings.Default.OutputDllName = TxtOutputDllName.Text;
 
             Properties.Settings.Default.Save();
 

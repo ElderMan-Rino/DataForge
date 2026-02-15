@@ -2,7 +2,7 @@
 using Elder.DataForge.Core.Common.Const;
 using Elder.DataForge.Core.ContentExtracter.Excel;
 using Elder.DataForge.Core.DataExporter.MessagePack;
-using Elder.DataForge.Core.DLLBuilder;
+using Elder.DataForge.Core.DllBuilder;
 using Elder.DataForge.Core.DocumentReader.Excel;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Core.SchemaAnalyzer.Excel;

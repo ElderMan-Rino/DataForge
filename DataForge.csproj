@@ -42,7 +42,7 @@
 </ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="DataForge\Core\DLLBuilder\1e0laevf.gxe~" />
+	  <None Remove="DataForge\Core\DllBuilder\1e0laevf.gxe~" />
 	</ItemGroup>
 
 </Project>

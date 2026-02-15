@@ -25,7 +25,7 @@
                 <TextBox x:Name="TxtRootNamespace" Text="{Binding RootNamespace}" Margin="0,5,0,15" Padding="3"/>
                 <TextBlock Text="Output DLL Name" FontWeight="SemiBold"/>
                 
-                <TextBox x:Name="TxtOutputDLLName" Text="{Binding OutputDLLName}" Margin="0,5,0,15" Padding="3" ToolTip="The name of the generated DLL file"/>
+                <TextBox x:Name="TxtOutputDllName" Text="{Binding OutputDllName}" Margin="0,5,0,15" Padding="3" ToolTip="The name of the generated DLL file"/>
                 <TextBlock Text="MSBuild Executable Path" FontWeight="SemiBold"/>
                 
                 <DockPanel Margin="0,5,0,15">

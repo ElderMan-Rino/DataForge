@@ -7,7 +7,7 @@ using System.IO;
 using System.Reactive.Subjects;
 using System.Text;
 
-namespace Elder.DataForge.Core.DLLBuilder
+namespace Elder.DataForge.Core.DllBuilder
 {
     public class DllBuilder : IDllBuilder
     {
@@ -24,6 +24,18 @@ namespace Elder.DataForge.Core.DLLBuilder
         {
             try
             {
+                if (string.IsNullOrEmpty(Properties.Settings.Default.OutputPath))
+                {
+                    UpdateProgressLevel("Build Stopped: **Base Output Path** is not configured.");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(Properties.Settings.Default.OutputDllName))
+                {
+                    UpdateProgressLevel("Build Stopped: **Output DLL Name** is not configured.");
+                    return false;
+                }
+
                 // 1. 경로 계산 (Settings 기반)
                 string rootOutputPath = Settings.Default.OutputPath;
 
@@ -34,7 +46,7 @@ namespace Elder.DataForge.Core.DLLBuilder
                 // 임시 프로젝트 폴더 및 출력 폴더
                 string sourceFolderPath = Path.Combine(rootOutputPath, "_TempMpcProject");
                 string dllsDirectory = Path.Combine(rootOutputPath, "Dlls");
-                string outputDllPath = Path.Combine(dllsDirectory, Settings.Default.OutputDLLName + ".dll");
+                string outputDllPath = Path.Combine(dllsDirectory, Settings.Default.OutputDllName + ".dll");
 
                 // 폴더 생성 보장
                 if (!Directory.Exists(sourceFolderPath))
