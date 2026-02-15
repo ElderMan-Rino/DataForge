@@ -1,5 +1,7 @@
-﻿using Elder.DataForge.Core.Common.Const.MessagePack;
+﻿using Elder.DataForge.Core.Common.Const;
+using Elder.DataForge.Core.Common.Const.MessagePack;
 using Elder.DataForge.Core.Interfaces;
+using Elder.DataForge.Properties;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive.Subjects;
@@ -18,11 +20,28 @@ namespace Elder.DataForge.Core.DLLBuilder
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
 
-        public async Task<bool> BuildDllAsync(string sourceFolderPath, string outputDllPath)
+        public async Task<bool> BuildDllAsync()
         {
             try
             {
-                UpdateProgressLevel("Preparing Project for Compilation...");
+                // 1. 경로 계산 (Settings 기반)
+                string rootOutputPath = Settings.Default.OutputPath;
+
+                // 소스 폴더 (DOD, Resolvers)
+                string dodPath = Path.Combine(rootOutputPath, MessagePackConsts.DODSuffix);
+                string resolverPath = Path.Combine(rootOutputPath, DataForgeConsts.Resolver);
+
+                // 임시 프로젝트 폴더 및 출력 폴더
+                string sourceFolderPath = Path.Combine(rootOutputPath, "_TempMpcProject");
+                string dllsDirectory = Path.Combine(rootOutputPath, "Dlls");
+                string outputDllPath = Path.Combine(dllsDirectory, Settings.Default.OutputDLLName + ".dll");
+
+                // 폴더 생성 보장
+                if (!Directory.Exists(sourceFolderPath))
+                    Directory.CreateDirectory(sourceFolderPath);
+
+                if (!Directory.Exists(dllsDirectory)) 
+                    Directory.CreateDirectory(dllsDirectory);
 
                 string assemblyName = Path.GetFileNameWithoutExtension(outputDllPath);
                 string csprojContent = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName);
@@ -36,7 +55,8 @@ namespace Elder.DataForge.Core.DLLBuilder
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments = $"build \"{csprojPath}\" -c Release -o \"{Path.GetDirectoryName(outputDllPath)}\"",
+                    // -s 옵션을 사용하여 기본 NuGet 저장소와 UnityNuGet 저장소를 모두 지정합니다.
+                    Arguments = $"build \"{csprojPath}\" -c Release -o \"{Path.GetDirectoryName(outputDllPath)}\" " + $"-s \"https://api.nuget.org/v3/index.json\" " +$"-s \"https://unitynuget-registry.openupm.com\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

@@ -24,7 +24,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
         {
             try
             {
-                UpdateProgressValue(0.1f);
+                UpdateProgressValue(5f);
 
                 // 1. MPC 환경 체크 및 설치
                 UpdateProgressLevel("Checking MessagePack Generator tool...");
@@ -34,7 +34,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                     Debug.WriteLine("[MPC] Failed to install or find MessagePack Generator.");
                     return false;
                 }
-                UpdateProgressValue(0.3f);
+                UpdateProgressValue(25.0f);
 
                 // 2. 임시 .csproj 생성
                 // mpc가 분석할 수 있도록 소스 코드 경로와 같은 위치 혹은 하위 폴더에 생성합니다.
@@ -44,19 +44,19 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 string tempProjectDir = Path.Combine(projectRoot, "_TempMpcProject");
 
                 string csprojPath = await GenerateCsprojFile(tempProjectDir, DataForgeConsts.AssemblyName);
-                UpdateProgressValue(0.5f);
+                UpdateProgressValue(45.0f);
 
                 // 3. mpc.exe 실행 (Resolver 생성)
                 UpdateProgressLevel("Running MessagePack Generator (MPC)...");
 
-                bool mpcSuccess = RunMPC(csprojPath);
+                bool mpcSuccess = await RunMPCAsync(csprojPath);
 
                 if (!mpcSuccess)
                 {
                     UpdateProgressLevel("MPC Generation failed. Check debug console.");
                     return false;
                 }
-                UpdateProgressValue(0.8f);
+                UpdateProgressValue(85.0f);
 
                 // 4. 후처리 (임시 프로젝트 폴더 삭제)
                 UpdateProgressLevel("Cleaning up temporary files...");
@@ -64,7 +64,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                     Directory.Delete(tempProjectDir, true);
 
                 UpdateProgressLevel("MessagePack Post-Processing Complete.");
-                UpdateProgressValue(1.0f);
+                UpdateProgressValue(100.0f);
 
                 return true;
             }
@@ -118,16 +118,31 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             }
         }
 
-        private bool RunMPC(string csprojPath)
+        private async Task<bool> RunMPCAsync(string csprojPath)
         {
             try
             {
+                string projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+                var restoreInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "tool restore",
+                    WorkingDirectory = projectRoot, // .config 폴더가 있는 위치
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+
+                using (var restoreProcess = Process.Start(restoreInfo))
+                {
+                    await restoreProcess?.WaitForExitAsync();
+                }
+
                 string inputPath = Path.Combine(Properties.Settings.Default.OutputPath, MessagePackConsts.DODSuffix);
                 string resolverFolderPath = Path.Combine(Properties.Settings.Default.OutputPath, DataForgeConsts.Resolver);
                 string outputPath = Path.Combine(resolverFolderPath, MessagePackConsts.ResolverFileName);
                 string nameSpace = Properties.Settings.Default.RootNamespace;
+
                 // 1. MSBuild 실제 경로 탐색
-                string projectRoot = Properties.Settings.Default.OutputPath;
                 string msBuildPath = FindMsBuildPath();
                 if (string.IsNullOrEmpty(msBuildPath))
                 {
@@ -138,7 +153,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments =  $"tool run mpc -p \"{csprojPath}\" -o \"{outputPath}\" -n \"{nameSpace}\"",
+                    Arguments = $"tool run mpc -i \"{inputPath}\" -p \"{csprojPath}\" -o \"{outputPath}\" -n \"{nameSpace}\"",
                     WorkingDirectory = projectRoot,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,

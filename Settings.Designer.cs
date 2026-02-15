@@ -58,5 +58,17 @@ namespace Elder.DataForge.Properties {
                 this["MsBuildPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string OutputDLLName {
+            get {
+                return ((string)(this["OutputDLLName"]));
+            }
+            set {
+                this["OutputDLLName"] = value;
+            }
+        }
     }
 }

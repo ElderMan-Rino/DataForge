@@ -9,8 +9,6 @@ namespace Elder.DataForge.Views
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        public ForgeSettings Settings { get; private set; } = new();
-
         public SettingsWindow()
         {
             InitializeComponent();
@@ -27,6 +25,7 @@ namespace Elder.DataForge.Views
             TxtBaseOutputPath.Text = Properties.Settings.Default.OutputPath;
             TxtRootNamespace.Text = Properties.Settings.Default.RootNamespace;
             TxtMsBuildPath.Text = Properties.Settings.Default.MsBuildPath;
+            TxtOutputDLLName.Text = Properties.Settings.Default.OutputDLLName;
         }
 
         // 기본 출력 경로 선택 (Tools/Output)
@@ -43,6 +42,7 @@ namespace Elder.DataForge.Views
             Properties.Settings.Default.OutputPath = TxtBaseOutputPath.Text;
             Properties.Settings.Default.RootNamespace = TxtRootNamespace.Text;
             Properties.Settings.Default.MsBuildPath = TxtMsBuildPath.Text;
+            Properties.Settings.Default.OutputDLLName = TxtOutputDLLName.Text;
 
             Properties.Settings.Default.Save();
 

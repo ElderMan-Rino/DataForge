@@ -1,4 +1,5 @@
 ﻿using Elder.DataForge.Core.CodeGenerator;
+using Elder.DataForge.Core.Common.Const;
 using Elder.DataForge.Core.ContentExtracter.Excel;
 using Elder.DataForge.Core.DataExporter.MessagePack;
 using Elder.DataForge.Core.DLLBuilder;
@@ -108,15 +109,7 @@ namespace Elder.DataForge.Models
 
         public void BuildDll()
         {
-            RunTask(BuildDllAsync);
-        }
-
-        private async Task<bool> BuildDllAsync()
-        {
-            var sourceFolderPath = string.Empty;
-            var outputFolderPath = string.Empty;
-            var result = await _dllBuilder.BuildDllAsync(sourceFolderPath, outputFolderPath);
-            return result;
+            RunTask(_dllBuilder.BuildDllAsync);
         }
     }
 }
