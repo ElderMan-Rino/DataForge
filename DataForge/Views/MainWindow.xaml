@@ -4,28 +4,15 @@
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         mc:Ignorable="av" x:Class="Elder.DataForge.Views.MainWindow"
-        Title="DataForge" Width="650" Height="850
-" MinWidth="650" MinHeight="750" MaxWidth="650" MaxHeight="850">
+        Title="DataForge" Width="650" Height="850" MinWidth="650" MinHeight="750" MaxWidth="650" MaxHeight="850">
     <Grid>
         <Button Content="Load Documents" Command="{Binding LoadDocumentsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 10, 10, 0"/>
         <Button Content="Export Data" Command="{Binding ExportDataCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 45, 10, 0"/>
         <Button Content="Create Elements" Command="{Binding GenerateSourceCodesCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 80, 10, 0" RenderTransformOrigin="1.266,1.947"/>
         <Button Content="Build DLL" Command="{Binding BuildDLLCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0, 115, 10, 0" RenderTransformOrigin="1.266,1.947"/>
         <Button Content="Open Setting" Command="{Binding OpenSettingCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="180" Height="30" Margin="0,150,10,0" RenderTransformOrigin="1.266,1.947"/>
-       
-       
-        <TextBlock x:Name="ProgressLevelText" Text="Ready"  HorizontalAlignment="Left" VerticalAlignment="Bottom"  Margin="12,0,0,60"  FontSize="12" Foreground="DimGray"/>
-       
-        <!-- 진행 상태 -->
-        <TextBlock x:Name="ExportProgressText" HorizontalAlignment="Left"  Margin="10,0,0,10" VerticalAlignment="Bottom" Height="30"/>
 
-        <!-- 진행 상태 표시를 위한 ProgressBar -->
-
-        <ProgressBar x:Name="ExportProgressBar" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="620" Height="25" Margin="0,0,0,10" Minimum="0" Maximum="100" Value="0"/>
-        <Label x:Name="ExportProgress" Content="Export Progress" Margin="8,0,0,35" Height="25" Width="Auto" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"/>
-
-        <!-- 데이터 리스트 -->
-        <ScrollViewer Margin="10,10,195,80" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <ScrollViewer Margin="10,10,195,260" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ListView x:Name="TableInfoListView" ItemsSource="{Binding DocumenttInfoDataCollection}" RenderTransformOrigin="0.5,0.5" SizeChanged="OnListViewSizeChanged">
                 <ListView.View>
                     <GridView>
@@ -35,6 +22,20 @@
                 </ListView.View>
             </ListView>
         </ScrollViewer>
-       
+
+        <GroupBox Header="Output Logs" Margin="10,0,10,85" Height="165" VerticalAlignment="Bottom">
+            <ListBox x:Name="LogListBox" 
+                     ItemsSource="{Binding LogMessages}" 
+                     Background="#F3F3F3" 
+                     FontSize="11" 
+                     FontFamily="Consolas"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+            </ListBox>
+        </GroupBox>
+
+        <TextBlock x:Name="ProgressLevelText" Text="Ready"  HorizontalAlignment="Left" VerticalAlignment="Bottom"  Margin="12,0,0,60"  FontSize="12" Foreground="DimGray"/>
+        <TextBlock x:Name="ExportProgressText" HorizontalAlignment="Left"  Margin="10,0,0,10" VerticalAlignment="Bottom" Height="30"/>
+        <ProgressBar x:Name="ExportProgressBar" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="620" Height="25" Margin="0,0,0,10" Minimum="0" Maximum="100" Value="0"/>
+        <Label x:Name="ExportProgress" Content="Export Progress" Margin="8,0,0,35" Height="25" Width="Auto" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"/>
     </Grid>
 </Window>

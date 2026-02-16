@@ -40,6 +40,11 @@ namespace Elder.DataForge.Views
         private void HandleOnProgressLevelUpdated(string level)
         {
             ProgressLevelText.Text = level;
+            ScrollDownInfoView();
+        }
+        private void ScrollDownInfoView()
+        {
+            LogListBox.ScrollIntoView(LogListBox.Items[LogListBox.Items.Count - 1]);
         }
 
         private void HandleProgressValueUpdated(float value)
