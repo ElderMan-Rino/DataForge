@@ -1,5 +1,4 @@
 ﻿using Elder.DataForge.Core.CodeGenerator;
-using Elder.DataForge.Core.Common.Const;
 using Elder.DataForge.Core.ContentExtracter.Excel;
 using Elder.DataForge.Core.DataExporter.MessagePack;
 using Elder.DataForge.Core.DllBuilder;
@@ -44,7 +43,7 @@ namespace Elder.DataForge.Models
             _dataExporter = new ExcelToMessagePackData(_contentExtracter, _schemaAnalyzer);
             _dllBuilder = new DllBuilder();
 
-            SubscribeToIProgressNotifiers(_codeGenerator, _dataExporter);
+            SubscribeToIProgressNotifiers(_codeGenerator, _dataExporter, _dllBuilder);
         }
 
         private void OnSourceProgressLevelUpdated(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
