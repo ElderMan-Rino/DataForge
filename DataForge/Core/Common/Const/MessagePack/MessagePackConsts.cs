@@ -23,9 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include=""{1}\**\*.cs"" />
-    <Compile Include=""{2}\**\*.cs"" />
-  </ItemGroup>
+    {1} </ItemGroup>
 </Project>";
     }
 }

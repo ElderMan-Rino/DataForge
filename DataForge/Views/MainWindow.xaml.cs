@@ -42,8 +42,13 @@ namespace Elder.DataForge.Views
             ProgressLevelText.Text = level;
             ScrollDownInfoView();
         }
+
         private void ScrollDownInfoView()
         {
+            if (LogListBox.Items.Count <= 0)
+            {
+                return;
+            }
             LogListBox.ScrollIntoView(LogListBox.Items[LogListBox.Items.Count - 1]);
         }
 

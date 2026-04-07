@@ -67,7 +67,18 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                 }
 
                 // 저장 경로 설정 (Settings 등에서 가져오도록 확장 가능)
-                string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DataForgeConsts.DataExportFolder);
+                string baseOutputPath = Elder.DataForge.Properties.Settings.Default.OutputPath;
+
+                if (string.IsNullOrEmpty(baseOutputPath))
+                {
+                    UpdateProgressLevel("Error: Output path is not configured in Settings.");
+                    return false;
+                }
+
+                // 2. 공통 출력 경로 아래에 "Data" 폴더를 추가로 붙여 최종 경로를 만듭니다.
+                // (DataForgeConsts.DataExportFolder 상수 값이 "Data"라면 상수를 그대로 사용하셔도 좋습니다)
+                string outputPath = Path.Combine(baseOutputPath, "Data");
+
                 if (!Directory.Exists(outputPath)) Directory.CreateDirectory(outputPath);
 
                 for (int i = 0; i < schemas.Count; i++)
