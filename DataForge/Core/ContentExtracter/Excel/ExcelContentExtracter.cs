@@ -19,9 +19,11 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
 
         private Subject<string> _updateProgressLevel = new();
         private Subject<float> _updateProgressValue = new();
+        private Subject<string> _updateOutputLog = new();
 
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
+        public IObservable<string> OnOutputLogUpdated => _updateOutputLog;
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);

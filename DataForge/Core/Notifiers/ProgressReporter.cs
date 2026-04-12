@@ -5,25 +5,26 @@ namespace Elder.DataForge.Core.Notifiers
 {
     public class ProgressReporter : IProgressNotifier, IDisposable
     {
-        private Subject<string> _progressLevel = new();
-        private Subject<float> _progressValue = new();
+        private Subject<string> _updateProgressLevel = new();
+        private Subject<float> _updateProgressValue = new();
+        private Subject<string> _updateOutputLog = new();
 
-        public IObservable<string> OnProgressLevelUpdated => _progressLevel;
-
-        public IObservable<float> OnProgressValueUpdated => _progressValue;
+        public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
+        public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
+        public IObservable<string> OnOutputLogUpdated => _updateOutputLog;
 
         protected void UpdateProgressLevel(string progressLevel)
         {
-            _progressLevel.OnNext(progressLevel);
+            _updateProgressLevel.OnNext(progressLevel);
         }
         protected void UpdateProgressValue(float progressValue)
         {
-            _progressValue.OnNext(progressValue);
+            _updateProgressValue.OnNext(progressValue);
         }
         protected void DisposeSubjects()
         {
-            _progressLevel.Dispose();
-            _progressValue.Dispose();
+            _updateProgressLevel.Dispose();
+            _updateProgressValue.Dispose();
         }
         public virtual void Dispose()
         {

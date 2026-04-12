@@ -36,13 +36,29 @@
 	</ItemGroup>
 
 	<ItemGroup>
+    <Compile Remove="DataForge\Libs\**" />
     <Compile Remove="Resources\**\*.cs" />
+    <EmbeddedResource Remove="DataForge\Libs\**" />
+    <None Remove="DataForge\Libs\**" />
     
     <None Remove="Resources\**\*.cs" />
+    
+    <Page Remove="DataForge\Libs\**" />
 </ItemGroup>
 
 	<ItemGroup>
 	  <None Remove="DataForge\Core\DllBuilder\1e0laevf.gxe~" />
+	  <None Remove="Libs\Unity.Collections.dll" />
+	  <None Remove="Libs\Unity.Entities.dll" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="Libs\Unity.Collections.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Libs\Unity.Entities.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 
 </Project>

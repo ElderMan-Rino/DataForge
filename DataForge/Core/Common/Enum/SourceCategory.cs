@@ -3,8 +3,8 @@
     public enum SourceCategory
     {
         Parser,
-        Dto,
-        Dod,
+        EditorData,
+        GameData,
         Utility
     }
 }

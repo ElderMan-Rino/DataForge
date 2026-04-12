@@ -23,18 +23,25 @@ namespace Elder.DataForge.Views
 
         private void SetupProgressSubscription()
         {
-            var viewModel = (DataContext as IViewModel);
-            if (viewModel == null) 
+            var viewModel = (DataContext as IViewModel); // IViewModel에 OnOutputLogUpdated가 있다고 가정합니다.
+            if (viewModel == null)
                 return;
 
             viewModel.OnProgressLevelUpdated
-                .ObserveOn(SynchronizationContext.Current) // UI 스레드에서 실행 보장
+                .ObserveOn(SynchronizationContext.Current)
                 .Subscribe(HandleOnProgressLevelUpdated);
 
-            // 2. Progress Value (수치) 업데이트
             viewModel.OnProgressValueUpdated
                 .ObserveOn(SynchronizationContext.Current)
                 .Subscribe(HandleProgressValueUpdated);
+
+            // ✨ 로그가 들어올 때마다 ListBox를 아래로 스크롤하도록 구독 추가
+            if (viewModel is DataForgeViewModel dfViewModel)
+            {
+                dfViewModel.OnOutputLogUpdated
+                    .ObserveOn(SynchronizationContext.Current)
+                    .Subscribe(_ => ScrollDownInfoView());
+            }
         }
 
         private void HandleOnProgressLevelUpdated(string level)

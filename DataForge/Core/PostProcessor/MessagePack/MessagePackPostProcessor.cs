@@ -1,10 +1,13 @@
 ﻿using Elder.DataForge.Core.Common.Const;
 using Elder.DataForge.Core.Common.Const.MessagePack;
 using Elder.DataForge.Core.Interfaces;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Elder.DataForge.Core.PostProcessor.MessagePack
 {
@@ -12,13 +15,14 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
     {
         private Subject<string> _updateProgressLevel = new();
         private Subject<float> _updateProgressValue = new();
+        private Subject<string> _updateOutputLog = new();
 
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
+        public IObservable<string> OnOutputLogUpdated => _updateOutputLog;
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
-
 
         public async Task<bool> PostProcessAsync()
         {
@@ -39,7 +43,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 // 2. 임시 .csproj 생성
                 // mpc가 분석할 수 있도록 소스 코드 경로와 같은 위치 혹은 하위 폴더에 생성합니다.
                 UpdateProgressLevel("Generating temporary project file for analysis...");
-                
+
                 string projectRoot = Properties.Settings.Default.OutputPath;
                 string tempProjectDir = Path.Combine(projectRoot, "_TempMpcProject");
 
@@ -207,7 +211,6 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             if (!string.IsNullOrEmpty(Properties.Settings.Default.MsBuildPath))
                 return Properties.Settings.Default.MsBuildPath;
 
-            // Properties.Settings.Default.MsBuildPath가 없을 경우 임의로 
             string[] searchPaths = GetPotentialMSBuildPaths();
             foreach (var path in searchPaths)
             {
@@ -238,7 +241,21 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 if (!Directory.Exists(targetPath))
                     Directory.CreateDirectory(targetPath);
 
-                string content = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, additionalTags);
+                // 1. 유니티 DLL 절대 경로 계산 (Libs 폴더 기준)
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string libsDir = Path.Combine(baseDir, "Libs");
+                string entitiesDllPath = Path.Combine(libsDir, "Unity.Entities.dll");
+                string collectionsDllPath = Path.Combine(libsDir, "Unity.Collections.dll");
+
+                // 2. 참조(Reference) 태그 생성
+                StringBuilder refBuilder = new StringBuilder();
+                refBuilder.AppendLine("  <ItemGroup>");
+                refBuilder.AppendLine($@"    <Reference Include=""Unity.Entities""><HintPath>{entitiesDllPath}</HintPath></Reference>");
+                refBuilder.AppendLine($@"    <Reference Include=""Unity.Collections""><HintPath>{collectionsDllPath}</HintPath></Reference>");
+                refBuilder.AppendLine("  </ItemGroup>");
+
+                // 3. 템플릿에 주입 ( {0}: 이름, {1}: 추가태그, {2}: DLL참조 )
+                string content = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, additionalTags, refBuilder.ToString());
                 string filePath = Path.Combine(targetPath, $"{assemblyName}.csproj");
 
                 // UTF8 with BOM은 가끔 외부 툴에서 문제를 일으키므로, 인코딩 선택에 유의하세요.

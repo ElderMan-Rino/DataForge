@@ -15,15 +15,18 @@ namespace Elder.DataForge.ViewModels
         private IModel? _model;
 
         public ObservableCollection<DocumentInfoData>? DocumenttInfoDataCollection => _model?.DocumenttInfoDataCollection;
+        public ObservableCollection<string>? LogMessages => _model?.LogMessages; // ✨ 이 줄을 추가!
 
         public ICommand LoadDocumentsCommand { get; }
         public ICommand ExportDataCommand { get; }
         public ICommand GenerateSourceCodesCommand { get; }
         public ICommand BuildDLLCommand { get; }
         public ICommand OpenSettingCommand { get; }
+        public ICommand OpenFolderCommand { get; }
 
         public IObservable<string> OnProgressLevelUpdated => _model?.OnProgressLevelUpdated;
         public IObservable<float> OnProgressValueUpdated => _model?.OnProgressValueUpdated;
+        public IObservable<string> OnOutputLogUpdated => _model?.OnOutputLogUpdated;
 
         public DataForgeViewModel()
         {
@@ -32,6 +35,12 @@ namespace Elder.DataForge.ViewModels
             GenerateSourceCodesCommand = new RelayCommand(OnGenerateSourceCodesCommand);
             BuildDLLCommand = new RelayCommand(OnBuildDLLCommand);
             OpenSettingCommand = new RelayCommand(OnOpenSettingCommand);
+            OpenFolderCommand = new RelayCommand(OnOpenFolderCommand);
+        }
+
+        private void OnOpenFolderCommand()
+        {
+            _model?.OpenFolder();
         }
 
         private void OnLoadDocumentsCommand()

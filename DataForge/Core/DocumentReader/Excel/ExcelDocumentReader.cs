@@ -15,14 +15,15 @@ namespace Elder.DataForge.Core.DocumentReader.Excel
         private IDocumentInfoLoader _infoLoader = new ExcelInfoLoader();
 
         private Dictionary<string, DocumentInfoData> _documenttInfoDataMap = new();
+        public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; private set; } = new();
 
         private Subject<string> _updateProgressLevel = new();
         private Subject<float> _updateProgressValue = new();
-
-        public ObservableCollection<DocumentInfoData> DocumenttInfoDataCollection { get; private set; } = new();
+        private Subject<string> _updateOutputLog = new();
 
         public IObservable<string> OnProgressLevelUpdated => _updateProgressLevel;
         public IObservable<float> OnProgressValueUpdated => _updateProgressValue;
+        public IObservable<string> OnOutputLogUpdated => _updateOutputLog;
 
         public ExcelDocumentReader()
         {
