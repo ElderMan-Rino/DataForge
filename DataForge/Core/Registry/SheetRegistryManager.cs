@@ -37,25 +37,20 @@ namespace Elder.DataForge.Core.Registry
         {
             foreach (var tableName in newTableNames)
             {
-                var existingEntry = existing.Sheets
-                    .FirstOrDefault(s => s.TableName == tableName);
-
-                if (existingEntry == null)
+                if (!existing.Sheets.Any(s => s.TableName == tableName))
                 {
                     existing.Sheets.Add(new SheetEntry
                     {
                         TableName = tableName,
-                        IsActive = true
                     });
                 }
             }
-
             return existing;
         }
 
-        public List<SheetEntry> GetActiveSheets()
+        public List<SheetEntry> GetSheets()
         {
-            return Load().Sheets.Where(s => s.IsActive).ToList();
+            return Load().Sheets;
         }
     }
 }

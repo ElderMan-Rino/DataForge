@@ -95,7 +95,7 @@ namespace Elder.DataForge.Core.CodeGenerator
             }
 
             // GeneratedBlobLoader는 전체 레지스트리 기준으로 생성
-            var activeSheets = _registryManager.GetActiveSheets();
+            var activeSheets = _registryManager.GetSheets(); 
             generateSourceCodes.Add(GenerateBlobLoader(activeSheets));
 
             var isSaveSuccess = await SaveGeneratedSourcesAsync(generateSourceCodes);
