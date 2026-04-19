@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Elder.Data.Runtime</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Unity.Entities" />
+    <Using Include="Unity.Collections" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <PackageReference Include="MessagePack" Version="2.5.140" />
+    <PackageReference Include="MessagePack.Annotations" Version="2.5.140" />
+  </ItemGroup>
+
+    <ItemGroup>
+    <Reference Include="Unity.Entities"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Entities.dll</HintPath></Reference>
+    <Reference Include="Unity.Collections"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Collections.dll</HintPath></Reference>
+    <Reference Include="Unity.Mathematics"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Mathematics.dll</HintPath></Reference>
+    <Reference Include="MessagePack"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\MessagePack.dll</HintPath></Reference>
+    <Reference Include="UniTask"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\UniTask.dll</HintPath></Reference>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    
+    <Compile Include="D:\Programming\DataForge\Resources\GameData\**\*.cs" />
+    <Compile Include="D:\Programming\DataForge\Resources\Resolvers\**\*.cs" />
+
+  </ItemGroup>
+</Project>

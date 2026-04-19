@@ -5,6 +5,7 @@
         Parser,
         EditorData,
         GameData,
-        Utility
+        Utility,
+        UnityScripts 
     }
 }

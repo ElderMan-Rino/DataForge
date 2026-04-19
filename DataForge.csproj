@@ -48,15 +48,27 @@
 
 	<ItemGroup>
 	  <None Remove="DataForge\Core\DllBuilder\1e0laevf.gxe~" />
+	  <None Remove="Libs\MessagePack.dll" />
+	  <None Remove="Libs\UniTask.dll" />
 	  <None Remove="Libs\Unity.Collections.dll" />
 	  <None Remove="Libs\Unity.Entities.dll" />
+	  <None Remove="Libs\Unity.Mathematics.dll" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Include="Libs\MessagePack.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Libs\UniTask.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	  <Content Include="Libs\Unity.Collections.dll">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="Libs\Unity.Entities.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Libs\Unity.Mathematics.dll">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	</ItemGroup>

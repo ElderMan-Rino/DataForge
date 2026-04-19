@@ -4,6 +4,7 @@ using Elder.DataForge.Core.Commons.Enum;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Properties;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive.Subjects;
@@ -33,7 +34,6 @@ namespace Elder.DataForge.Core.DllBuilder
                 UpdateProgressValue(0f);
                 UpdateProgressLevel("Preparing DLL Build...");
 
-                // 설정 검증
                 if (string.IsNullOrEmpty(Settings.Default.OutputPath) || string.IsNullOrEmpty(Settings.Default.OutputDllName))
                 {
                     UpdateProgressLevel("Build Stopped: Output Path or Name is not configured.");
@@ -42,7 +42,6 @@ namespace Elder.DataForge.Core.DllBuilder
 
                 UpdateProgressValue(10f);
 
-                // 1. 경로 계산
                 string rootOutputPath = Settings.Default.OutputPath;
                 string gameDataPath = Path.Combine(rootOutputPath, SourceCategory.GameData.ToString());
                 string resolverPath = Path.Combine(rootOutputPath, DataForgeConsts.Resolver);
@@ -55,49 +54,52 @@ namespace Elder.DataForge.Core.DllBuilder
 
                 UpdateProgressValue(20f);
 
-                // ✨ 2. 로컬 Libs 절대 경로 계산 및 파일 검증
-                // AppDomain.CurrentDomain.BaseDirectory는 현재 실행 중인 .exe의 폴더 위치를 반환합니다.
+                // ✨ 1. 로컬 Libs 절대 경로 및 필수 DLL 목록 정의
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string libsDir = Path.Combine(baseDir, "Libs");
 
-                string entitiesDllPath = Path.Combine(libsDir, "Unity.Entities.dll");
-                string collectionsDllPath = Path.Combine(libsDir, "Unity.Collections.dll");
+                // 빌드에 필요한 모든 외부 라이브러리 목록
+                string[] requiredDlls = {
+                    "Unity.Entities.dll",
+                    "Unity.Collections.dll",
+                    "Unity.Mathematics.dll",
+                    "MessagePack.dll",
+                    "UniTask.dll", // Cysharp.Threading.Tasks 용
+                    "Elder.Framework.Data.Interfaces.dll" // IGameDataLoader 등 프레임워크 인터페이스 용
+                };
 
-                // 빌드 전 파일이 실제로 존재하는지 체크하여 에러를 방지합니다.
-                if (!File.Exists(entitiesDllPath) || !File.Exists(collectionsDllPath))
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("Critical Error: Required Unity DLLs not found in Libs folder!");
-                    sb.AppendLine($"Expected Path: {libsDir}");
-                    LogMessage(sb.ToString());
-                    UpdateProgressLevel("Build Failed: Missing local DLLs.");
-                    return false;
-                }
-
-                // ✨ 3. .csproj에 주입할 참조 구문 생성 (절대 경로 HintPath 사용)
-                // HintPath를 통해 MSBuild가 프로젝트 외부의 DLL을 정확히 찾도록 합니다.
                 StringBuilder refBuilder = new StringBuilder();
                 refBuilder.AppendLine("  <ItemGroup>");
-                refBuilder.AppendLine($@"    <Reference Include=""Unity.Entities""><HintPath>{entitiesDllPath}</HintPath></Reference>");
-                refBuilder.AppendLine($@"    <Reference Include=""Unity.Collections""><HintPath>{collectionsDllPath}</HintPath></Reference>");
+
+                foreach (var dllName in requiredDlls)
+                {
+                    string fullPath = Path.Combine(libsDir, dllName);
+                    if (!File.Exists(fullPath))
+                    {
+                        LogMessage($"[Warning] 필수 참조 누락: {dllName} 파일이 Libs 폴더에 없습니다. ({fullPath})");
+                        continue;
+                    }
+
+                    string assemblyName = Path.GetFileNameWithoutExtension(dllName);
+                    refBuilder.AppendLine($@"    <Reference Include=""{assemblyName}""><HintPath>{fullPath}</HintPath></Reference>");
+                }
                 refBuilder.AppendLine("  </ItemGroup>");
 
                 UpdateProgressValue(30f);
 
-                // 4. csproj 파일 생성
+                // 2. .csproj 생성
                 string compileItems = $@"
-    <Compile Include=""{gameDataPath}\**\*.cs"" Exclude=""{gameDataPath}\GeneratedDataLoader.cs"" />
+    <Compile Include=""{gameDataPath}\**\*.cs"" />
     <Compile Include=""{resolverPath}\**\*.cs"" />
 ";
-                string assemblyName = Path.GetFileNameWithoutExtension(outputDllPath);
 
-                // MessagePackConsts.DodProjectTemplate의 {2} 위치에 refBuilder(참조 구문)를 넣습니다.
-                string csprojContent = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, compileItems, refBuilder.ToString());
+                string assemblyNameResult = Path.GetFileNameWithoutExtension(outputDllPath);
+                string csprojContent = string.Format(MessagePackConsts.DodProjectTemplate, assemblyNameResult, compileItems, refBuilder.ToString());
 
-                string csprojPath = Path.Combine(sourceFolderPath, $"{assemblyName}.csproj");
+                string csprojPath = Path.Combine(sourceFolderPath, $"{assemblyNameResult}.csproj");
                 await File.WriteAllTextAsync(csprojPath, csprojContent, Encoding.UTF8);
 
-                // 5. nuget.config 생성 (오프라인 빌드 안정성을 위해 nuget.org만 남김)
+                // 3. nuget.config 생성
                 string nugetConfigContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
   <packageSources>
@@ -105,13 +107,12 @@ namespace Elder.DataForge.Core.DllBuilder
     <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
   </packageSources>
 </configuration>";
-                string nugetConfigPath = Path.Combine(sourceFolderPath, "nuget.config");
-                await File.WriteAllTextAsync(nugetConfigPath, nugetConfigContent, Encoding.UTF8);
+                await File.WriteAllTextAsync(Path.Combine(sourceFolderPath, "nuget.config"), nugetConfigContent, Encoding.UTF8);
 
                 UpdateProgressValue(50f);
 
-                // 6. dotnet build 실행
-                UpdateProgressLevel($"Compiling DLL: {assemblyName}...");
+                // 4. dotnet build 실행
+                UpdateProgressLevel($"Compiling DLL: {assemblyNameResult}...");
                 UpdateProgressValue(70f);
 
                 var startInfo = new ProcessStartInfo
@@ -125,20 +126,15 @@ namespace Elder.DataForge.Core.DllBuilder
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
-                startInfo.EnvironmentVariables["DOTNET_CLI_UI_LANGUAGE"] = "en-US";
-                startInfo.EnvironmentVariables["VSLANG"] = "1033";
 
                 using (var process = Process.Start(startInfo))
                 {
-                    if (process == null) throw new Exception("Failed to start dotnet process.");
+                    if (process == null) throw new Exception("dotnet 프로세스를 시작할 수 없습니다.");
 
-                    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
-                    Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                    string outputLogs = await process.StandardOutput.ReadToEndAsync();
+                    string errorLogs = await process.StandardError.ReadToEndAsync();
 
                     await process.WaitForExitAsync();
-
-                    string outputLogs = await outputTask;
-                    string errorLogs = await errorTask;
 
                     if (process.ExitCode != 0)
                     {
@@ -147,19 +143,14 @@ namespace Elder.DataForge.Core.DllBuilder
                         if (!string.IsNullOrWhiteSpace(errorLogs)) errorBuilder.AppendLine($"[StdErr]\n{errorLogs}");
                         if (!string.IsNullOrWhiteSpace(outputLogs)) errorBuilder.AppendLine($"[StdOut]\n{outputLogs}");
 
-                        string fullError = errorBuilder.ToString();
-                        string errorLogFilePath = Path.Combine(dllsDirectory, "build_error.log");
-                        await File.WriteAllTextAsync(errorLogFilePath, fullError, Encoding.UTF8);
-
-                        UpdateProgressLevel("Build Failed! Check Output Logs.");
-                        LogMessage(fullError);
-                        UpdateProgressValue(0f);
+                        LogMessage(errorBuilder.ToString());
+                        UpdateProgressLevel("Build Failed! 출력 로그를 확인하세요.");
                         return false;
                     }
                 }
 
                 UpdateProgressLevel("DLL Build Success!");
-                LogMessage($"[{DateTime.Now:HH:mm:ss}] DLL successfully built at: {outputDllPath}");
+                LogMessage($"[{DateTime.Now:HH:mm:ss}] DLL 생성 성공: {outputDllPath}");
                 UpdateProgressValue(100f);
                 return true;
             }

@@ -4,6 +4,7 @@ using Elder.DataForge.Core.Validators.MessagePack;
 using Elder.DataForge.Models.Data;
 using Elder.Reactives.Helpers;
 using MessagePack;
+using MessagePack.Resolvers;
 using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -57,8 +58,6 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
             {
                 UpdateProgressLevel("Starting Data Export with Schema Analysis...");
 
-                // 1. 최신 컨텐츠 추출 및 스키마 분석 수행
-                // 이 과정을 통해 필드가 Size별로 재정렬된 최신 TableSchema를 얻습니다.
                 var contents = await _contentExtracter.ExtractDocumentContentDataAsync(documentInfos);
                 var schemas = _schemaAnalyzer.AnalyzeFields(contents);
 
@@ -68,47 +67,39 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                     return false;
                 }
 
-                // 저장 경로 설정 (Settings 등에서 가져오도록 확장 가능)
                 string baseOutputPath = Elder.DataForge.Properties.Settings.Default.OutputPath;
-
                 if (string.IsNullOrEmpty(baseOutputPath))
                 {
                     UpdateProgressLevel("Error: Output path is not configured in Settings.");
                     return false;
                 }
 
-                // 2. 공통 출력 경로 아래에 "Data" 폴더를 추가로 붙여 최종 경로를 만듭니다.
-                // (DataForgeConsts.DataExportFolder 상수 값이 "Data"라면 상수를 그대로 사용하셔도 좋습니다)
                 string outputPath = Path.Combine(baseOutputPath, "Data");
-
                 if (!Directory.Exists(outputPath)) Directory.CreateDirectory(outputPath);
+
+                var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 
                 for (int i = 0; i < schemas.Count; i++)
                 {
                     var schema = schemas[i];
                     UpdateProgressLevel($"Syncing & Exporting Table: {schema.TableName} ({i + 1}/{schemas.Count})");
 
-                    // 2. 분석된 스키마의 KeyIndex(정렬 순서)에 맞춰 데이터 재구성
-                    var serializedTable = new List<Dictionary<int, object>>();
+                    var serializedTable = new List<object[]>();
 
                     foreach (var row in schema.RawRows)
                     {
-                        var rowMap = new Dictionary<int, object>();
-
+                        var rowArray = new object[schema.AnalyzedFields.Count];
                         foreach (var field in schema.AnalyzedFields)
                         {
-                            // 분석기(Analyzer)가 정의한 타입과 인덱스 정보를 그대로 활용
                             object parsedValue = ParseValueBySchema(field, row);
-
-                            // 중요: 분석기가 재정렬하여 할당한 KeyIndex를 MessagePack의 키로 사용
-                            // 이를 통해 유니티의 DOD 구조체 레이아웃과 바이너리 순서가 1:1로 일치하게 됨
-                            rowMap.Add(field.KeyIndex, parsedValue);
+                            // 분석기가 정한 KeyIndex 순서대로 배열에 배치 (유니티 [Key(n)]와 일치)
+                            rowArray[field.KeyIndex] = parsedValue;
                         }
-                        serializedTable.Add(rowMap);
+                        serializedTable.Add(rowArray);
                     }
 
-                    // 3. MessagePack 직렬화 및 파일 저장
-                    byte[] bin = MessagePackSerializer.Serialize(serializedTable);
+                    // 3. MessagePack 직렬화 실행
+                    byte[] bin = MessagePackSerializer.Serialize(serializedTable, options);
 
                     if (!await _validator.ValidateAsync(bin, schema))
                     {
@@ -117,7 +108,6 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                     }
 
                     await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{schema.TableName}.bytes"), bin);
-
                     UpdateProgressValue((float)(i + 1) / schemas.Count * 100f);
                 }
 
@@ -145,7 +135,11 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
             }
 
             int targetIdx = field.ExcelIndices[0];
-            if (row.Count <= targetIdx || string.IsNullOrEmpty(row[targetIdx])) return null;
+
+            if (row.Count <= targetIdx || string.IsNullOrEmpty(row[targetIdx]))
+            {
+                return GetDefaultValueForPrimitive(field.ManagedType);
+            }
 
             return ConvertToPrimitive(field.ManagedType, row[targetIdx]);
         }
@@ -161,6 +155,20 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                 "bool" or "boolean" => bool.Parse(value),
                 "string" => value,
                 _ => value
+            };
+        }
+
+        private object GetDefaultValueForPrimitive(string type)
+        {
+            return type.ToLower() switch
+            {
+                "int" or "int32" => 0,
+                "float" or "single" => 0f,
+                "long" or "int64" => 0L,
+                "double" => 0d,
+                "bool" or "boolean" => false,
+                "string" => string.Empty,
+                _ => 0 // Enum 등 알 수 없는 타입의 기본값은 0 (int)로 설정
             };
         }
     }

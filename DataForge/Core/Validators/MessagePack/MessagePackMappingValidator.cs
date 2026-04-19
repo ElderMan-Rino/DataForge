@@ -17,39 +17,30 @@ namespace Elder.DataForge.Core.Validators.MessagePack
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void UpdateOutputLog(string outputLog) => _updateOutputLog.OnNext(outputLog);
 
-        public async Task<bool> ValidateAsync(byte[] binaryData, TableSchema schema)
+        public async Task<bool> ValidateAsync(byte[] data, TableSchema schema)
         {
             try
             {
-                UpdateProgressLevel($"Validating Schema Mapping for: {schema.TableName}");
+                // 🚨 핵심 수정: Dictionary가 아닌 object[] 형태로 역직렬화하여 검증합니다.
+                var deserialized = MessagePackSerializer.Deserialize<List<object[]>>(data);
 
-                // 1. 역직렬화 테스트 (Dictionary 형태로 구조적 정합성 확인)
-                var testData = MessagePackSerializer.Deserialize<List<Dictionary<int, object>>>(binaryData);
+                if (deserialized.Count == 0) return true;
 
-                if (testData == null || testData.Count == 0)
+                // 첫 번째 행을 샘플로 스키마 일치 여부 확인
+                var firstRow = deserialized[0];
+                if (firstRow.Length != schema.AnalyzedFields.Count)
                 {
-                    UpdateProgressLevel("Warning: Exported data is empty.");
-                    return true;
+                    UpdateOutputLog($"[Validation Error] 필드 개수 불일치: {schema.TableName}");
+                    return false;
                 }
 
-                // 2. 필드 존재 여부 및 타입 샘플링 검사
-                var sampleRow = testData[0];
-                foreach (var field in schema.AnalyzedFields)
-                {
-                    if (!sampleRow.ContainsKey(field.KeyIndex))
-                    {
-                        UpdateProgressLevel($"Error: KeyIndex {field.KeyIndex} ({field.Name}) missing in binary.");
-                        return false;
-                    }
-                }
-
-                UpdateProgressLevel($"Validation Success: {schema.TableName}");
                 return true;
             }
             catch (Exception ex)
             {
-                UpdateProgressLevel($"Validation Exception: {ex.Message}");
+                UpdateOutputLog($"[Validation Exception] {ex.Message}");
                 return false;
             }
         }

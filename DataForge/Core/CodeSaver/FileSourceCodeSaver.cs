@@ -4,6 +4,9 @@ using Elder.DataForge.Properties;
 using System.IO;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
 
 namespace Elder.DataForge.Core.CodeSaver
 {
@@ -47,21 +50,18 @@ namespace Elder.DataForge.Core.CodeSaver
                 {
                     var code = sourceCodes[i];
 
-                    // 카테고리별 폴더 생성
+                    // 이전처럼 무조건 OutputPath 하위 카테고리 폴더에 저장합니다.
                     string folderPath = Path.Combine(outputDirectory, code.category.ToString());
                     if (!Directory.Exists(folderPath))
                         Directory.CreateDirectory(folderPath);
 
                     string fullPath = Path.Combine(folderPath, code.fileName);
 
-                    // 진행 메시지 업데이트
                     UpdateProgressLevel($"Saving [{code.category}] {code.fileName}...");
 
-                    // 줄바꿈 정규화 및 파일 저장
                     string normalized = code.content.Replace("\r\n", "\n").Replace("\n", "\r\n");
                     await File.WriteAllTextAsync(fullPath, normalized, Encoding.UTF8);
 
-                    // 진행률 계산 및 업데이트 (0% ~ 100%)
                     float progress = (float)(i + 1) / sourceCodes.Count * 100f;
                     UpdateProgressValue(progress);
                 }

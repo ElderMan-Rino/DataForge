@@ -2,7 +2,7 @@
 {
     public static class MessagePackConsts
     {
-        public const string Prefix = "MsgPack";
+        public const string Prefix = "Blob";
         public const string DTOSuffix = "EditorData";
         public const string DODSuffix = "GameData";
         public const string ResolverFileName = "MessagePackGeneratedResolver.cs";

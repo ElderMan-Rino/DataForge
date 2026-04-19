@@ -23,6 +23,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void UpdateOutputLog(string outputLog) => _updateOutputLog.OnNext(outputLog);
 
         public async Task<bool> PostProcessAsync()
         {
@@ -35,7 +36,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 var isMpcInstalled = await EnsureMpcToolInstalledAsync();
                 if (!isMpcInstalled)
                 {
-                    Debug.WriteLine("[MPC] Failed to install or find MessagePack Generator.");
+                    UpdateOutputLog("[MPC] Failed to install or find MessagePack Generator.");
                     return false;
                 }
                 UpdateProgressValue(25.0f);
@@ -75,7 +76,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             catch (Exception ex)
             {
                 UpdateProgressLevel($"Error: {ex.Message}");
-                Debug.WriteLine($"[ProcessAsync] Critical Error: {ex}");
+                UpdateOutputLog($"[ProcessAsync] Critical Error: {ex.Message}");
                 return false;
             }
         }
@@ -117,7 +118,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Tool Setup Error: {ex.Message}");
+                UpdateOutputLog($"Tool Setup Error: {ex.Message}");
                 return false;
             }
         }
@@ -150,7 +151,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 string msBuildPath = FindMsBuildPath();
                 if (string.IsNullOrEmpty(msBuildPath))
                 {
-                    Debug.WriteLine("[MPC] Error: MSBuild.exe를 찾을 수 없습니다. VS 2022 설치 확인이 필요합니다.");
+                    UpdateOutputLog("[MPC] Error: MSBuild.exe를 찾을 수 없습니다. VS 2022 설치 확인이 필요합니다.");
                     return false;
                 }
 
@@ -192,8 +193,8 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
 
                     if (process.ExitCode != 0)
                     {
-                        Debug.WriteLine($"MPC Fail Output: {output}");
-                        Debug.WriteLine($"MPC Fail Error: {error}");
+                        UpdateOutputLog($"MPC Fail Output: {output}");
+                        UpdateOutputLog($"MPC Fail Error: {error}");
                         return false;
                     }
                     return true;
@@ -201,7 +202,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"RunMPC Critical Exception: {ex.Message}");
+                UpdateOutputLog($"RunMPC Critical Exception: {ex.Message}");
                 return false;
             }
         }
@@ -265,7 +266,7 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CsprojGen] Error: {ex.Message}");
+                UpdateOutputLog($"[CsprojGen] Error: {ex.Message}");
                 throw; // 상위 ProcessAsync에서 에러 처리를 하도록 던짐
             }
         }

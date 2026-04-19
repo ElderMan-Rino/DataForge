@@ -31,8 +31,10 @@ namespace Elder.DataForge.Core.CodeGenerator
 
         private void UpdateProgressLevel(string progressLevel) => _updateProgressLevel.OnNext(progressLevel);
         private void UpdateProgressValue(float progressValue) => _updateProgressValue.OnNext(progressValue);
+        private void UpdateOutputLog(string outputLog) => _updateOutputLog.OnNext(outputLog);
         private void OnSourceProgressLevelUpdated(string progressLevel) => UpdateProgressLevel(progressLevel);
         private void OnSourceProgressValueUpdated(float progressValue) => UpdateProgressValue(progressValue);
+        private void OnSourceOutputLogUpdated(string outputLog) => UpdateOutputLog(outputLog);
 
         public SourceCodeGenerator(IDocumentContentExtracter contentExtracter, ITableSchemaAnalyzer schemaAnalyzer)
         {
@@ -51,6 +53,7 @@ namespace Elder.DataForge.Core.CodeGenerator
             {
                 notifier.OnProgressLevelUpdated.Subscribe(OnSourceProgressLevelUpdated).Add(_disposables);
                 notifier.OnProgressValueUpdated.Subscribe(OnSourceProgressValueUpdated).Add(_disposables);
+                notifier.OnOutputLogUpdated.Subscribe(OnSourceOutputLogUpdated).Add(_disposables);
             }
         }
 
