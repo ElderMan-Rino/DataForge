@@ -6,5 +6,6 @@ namespace Elder.DataForge.Core.Interfaces
     public interface ICodeEmitter : IProgressNotifier
     {
         public Task<List<GeneratedSourceCode>> GenerateAsync(List<TableSchema> schemas);
+        public string GenerateDataLoaderContent(List<SheetEntry> activeSheets); 
     }
 }

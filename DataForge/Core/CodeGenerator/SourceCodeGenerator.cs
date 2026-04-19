@@ -1,7 +1,9 @@
 ﻿using Elder.DataForge.Core.CodeGenerator.MessagePack;
 using Elder.DataForge.Core.CodeSaver;
+using Elder.DataForge.Core.Commons.Enum;
 using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Core.PostProcessor.MessagePack;
+using Elder.DataForge.Core.Registry;
 using Elder.DataForge.Models.Data;
 using Elder.Reactives.Helpers;
 using System.Reactive.Disposables;
@@ -13,6 +15,8 @@ namespace Elder.DataForge.Core.CodeGenerator
 {
     public class SourceCodeGenerator : ISourceCodeGenerator
     {
+        private readonly SheetRegistryManager _registryManager = new();
+
         private CompositeDisposable _disposables = new();
 
         private IDocumentContentExtracter _contentExtracter;
@@ -57,10 +61,11 @@ namespace Elder.DataForge.Core.CodeGenerator
             }
         }
 
-      
+
         public async Task<bool> GenerateSourceCodeAsync(IReadOnlyList<DocumentInfoData> documentInfos)
         {
             UpdateProgressLevel("GenerateSourceCode Start");
+
             var documentContents = await ExtractContentAsync(documentInfos);
             if (documentContents == null || !documentContents.Any())
             {
@@ -75,12 +80,23 @@ namespace Elder.DataForge.Core.CodeGenerator
                 return false;
             }
 
+            // 레지스트리 병합 및 저장
+            UpdateProgressLevel("Updating Sheet Registry...");
+            var registry = _registryManager.Load();
+            var newTableNames = domainSchemas.Select(s => s.TableName);
+            registry = _registryManager.Merge(registry, newTableNames);
+            _registryManager.Save(registry);
+
             var generateSourceCodes = await GenerateSourceCodesAsync(domainSchemas);
             if (generateSourceCodes == null || !generateSourceCodes.Any())
             {
                 UpdateProgressLevel("GenerateSourceCode.GenerateSourceCodesAsync Failed");
                 return false;
             }
+
+            // GeneratedBlobLoader는 전체 레지스트리 기준으로 생성
+            var activeSheets = _registryManager.GetActiveSheets();
+            generateSourceCodes.Add(GenerateBlobLoader(activeSheets));
 
             var isSaveSuccess = await SaveGeneratedSourcesAsync(generateSourceCodes);
             if (!isSaveSuccess)
@@ -90,8 +106,17 @@ namespace Elder.DataForge.Core.CodeGenerator
             }
 
             await RunPostProcessingServiceAsync();
-            
             return true;
+        }
+
+        private GeneratedSourceCode GenerateBlobLoader(List<SheetEntry> activeSheets)
+        {
+            // TableSchema 대신 SheetEntry 리스트를 받는 오버로드 추가
+            return new GeneratedSourceCode(
+                "GeneratedBlobLoader.cs",
+                _codeEmitter.GenerateDataLoaderContent(activeSheets),
+                SourceCategory.UnityScripts
+            );
         }
 
         private async Task<Dictionary<string, DocumentContentData>> ExtractContentAsync(IReadOnlyList<DocumentInfoData> documentInfos)
