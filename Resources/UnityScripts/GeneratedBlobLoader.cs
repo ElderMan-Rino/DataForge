@@ -8,9 +8,7 @@ namespace Elder.SkillTrial.Resources.Data
 	{
 		public static async UniTask LoadAllDataAsync(IDataSheetLoader sheetLoader)
 		{
-			await UniTask.WhenAll(
-				sheetLoader.LoadSheetAsync<TestSheetRoot>("TestSheet")
-			);
+			await sheetLoader.LoadSheetAsync<SceneInfoRoot>("SceneInfo");
 		}
 	}
 }

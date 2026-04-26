@@ -136,61 +136,70 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
             int rowCount = worksheet.Dimension?.Rows ?? 0;
             int colCount = worksheet.Dimension?.Columns ?? 0;
 
+            _updateOutputLog.OnNext($"[Enum] Parsing sheet: {sheetName} (rows={rowCount}, cols={colCount})");
+
             var enumType = EnumType.Normal;
             int nameColIndex = -1;
             int valueColIndex = -1;
+            bool headerFound = false;
             var entries = new List<EnumEntry>();
 
             for (int row = 1; row <= rowCount; row++)
             {
-                // 첫 번째 행: EnumType 태그 탐색
-                if (row == 1)
-                {
-                    for (int col = 1; col <= colCount; col++)
-                    {
-                        string cell = worksheet.Cells[row, col].Text?.Trim();
-                        if (string.IsNullOrEmpty(cell)) continue;
+                var rowDump = new System.Text.StringBuilder();
+                rowDump.Append($"[Enum] row={row} cells: ");
+                for (int col = 1; col <= colCount; col++)
+                    rowDump.Append($"[{col}]='{worksheet.Cells[row, col].Text?.Trim()}' ");
+                _updateOutputLog.OnNext(rowDump.ToString());
 
-                        var match = EnumTypeTagRegex.Match(cell);
-                        if (match.Success)
-                        {
-                            string typeValue = match.Groups[1].Value;
-                            if (typeValue.Equals("Flag", StringComparison.OrdinalIgnoreCase))
-                                enumType = EnumType.Flag;
-                        }
+                // 각 행을 순회하며 EnumType 태그 / 헤더 / 데이터를 동시에 처리
+                bool rowHasData = false;
+                for (int col = 1; col <= colCount; col++)
+                {
+                    string cell = worksheet.Cells[row, col].Text?.Trim();
+                    if (string.IsNullOrEmpty(cell)) continue;
+
+                    // EnumType 태그 감지 (어느 행, 어느 셀에 있어도 처리)
+                    var match = EnumTypeTagRegex.Match(cell);
+                    if (match.Success)
+                    {
+                        string typeValue = match.Groups[1].Value;
+                        enumType = typeValue.Equals("Flag", StringComparison.OrdinalIgnoreCase)
+                            ? EnumType.Flag : EnumType.Normal;
+                        _updateOutputLog.OnNext($"[Enum] EnumType={enumType}");
+                        continue;
                     }
-                    continue;
-                }
 
-                // 헤더 행: EnumName / Value 컬럼 인덱스 확정
-                if (nameColIndex == -1)
-                {
-                    bool isHeaderRow = false;
-                    for (int col = 1; col <= colCount; col++)
+                    // 헤더 감지 (아직 못 찾은 경우)
+                    if (!headerFound)
                     {
-                        string cell = worksheet.Cells[row, col].Text?.Trim();
-                        if (string.IsNullOrEmpty(cell)) continue;
-
-                        // EnumName:string 또는 EnumName 형태 모두 허용
                         string colName = cell.Contains(Colon) ? cell.Split(Colon)[0].Trim() : cell;
                         if (colName.Equals(EnumNameColumn, StringComparison.OrdinalIgnoreCase))
                         {
                             nameColIndex = col;
-                            isHeaderRow = true;
+                            rowHasData = true;
                         }
                         else if (colName.Equals(EnumValueColumn, StringComparison.OrdinalIgnoreCase))
                         {
                             valueColIndex = col;
-                            isHeaderRow = true;
+                            rowHasData = true;
                         }
                     }
-                    if (isHeaderRow) continue;
                 }
 
-                // 데이터 행
-                if (nameColIndex == -1) continue;
+                // 이번 행에서 헤더를 새로 찾았으면 확정 후 다음 행으로
+                if (!headerFound && rowHasData && nameColIndex != -1)
+                {
+                    headerFound = true;
+                    _updateOutputLog.OnNext($"[Enum] Header found at row={row}, nameCol={nameColIndex}, valueCol={valueColIndex}");
+                    continue;
+                }
 
-                string entryName = nameColIndex > 0 ? worksheet.Cells[row, nameColIndex].Text?.Trim() : null;
+                // 헤더를 아직 못 찾았으면 데이터 행 처리 불가
+                if (!headerFound) continue;
+
+                // 데이터 행
+                string entryName = worksheet.Cells[row, nameColIndex].Text?.Trim();
                 if (string.IsNullOrEmpty(entryName)) continue;
 
                 int entryValue = entries.Count;
@@ -202,11 +211,16 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
                 }
 
                 entries.Add(new EnumEntry(entryName, entryValue));
+                _updateOutputLog.OnNext($"[Enum] Entry: {entryName}={entryValue}");
             }
 
             if (entries.Count == 0)
+            {
+                _updateOutputLog.OnNext($"[Enum] WARNING: No entries found in sheet '{sheetName}'");
                 return null;
+            }
 
+            _updateOutputLog.OnNext($"[Enum] '{enumName}' generated with {entries.Count} entries.");
             return new EnumSchema { EnumName = enumName, EnumType = enumType, Entries = entries };
         }
 
