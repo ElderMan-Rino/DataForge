@@ -5,6 +5,7 @@ using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Core.PostProcessor.MessagePack;
 using Elder.DataForge.Core.Registry;
 using Elder.DataForge.Models.Data;
+using Elder.DataForge.Models.Data.Excel;
 using Elder.Reactives.Helpers;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -95,8 +96,17 @@ namespace Elder.DataForge.Core.CodeGenerator
             }
 
             // GeneratedBlobLoader는 전체 레지스트리 기준으로 생성
-            var activeSheets = _registryManager.GetSheets(); 
+            var activeSheets = _registryManager.GetSheets();
             generateSourceCodes.Add(GenerateBlobLoader(activeSheets));
+
+            // Enum 스크립트 생성
+            var enumSchemas = CollectEnumSchemas(documentContents);
+            if (enumSchemas.Any())
+            {
+                UpdateProgressLevel($"Generating Enum scripts... ({enumSchemas.Count} enums)");
+                var enumSources = _codeEmitter.GenerateEnums(enumSchemas);
+                generateSourceCodes.AddRange(enumSources);
+            }
 
             var isSaveSuccess = await SaveGeneratedSourcesAsync(generateSourceCodes);
             if (!isSaveSuccess)
@@ -122,6 +132,17 @@ namespace Elder.DataForge.Core.CodeGenerator
         private async Task<Dictionary<string, DocumentContentData>> ExtractContentAsync(IReadOnlyList<DocumentInfoData> documentInfos)
         {
             return await _contentExtracter.ExtractDocumentContentDataAsync(documentInfos);
+        }
+
+        private List<EnumSchema> CollectEnumSchemas(Dictionary<string, DocumentContentData> documentContents)
+        {
+            var result = new List<EnumSchema>();
+            foreach (var doc in documentContents.Values)
+            {
+                if (doc is ExcelContentData excelData)
+                    result.AddRange(excelData.EnumSchemas);
+            }
+            return result;
         }
 
         private List<TableSchema> ParseDomainSchemas(Dictionary<string, DocumentContentData> documentContents)

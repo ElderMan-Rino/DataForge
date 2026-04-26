@@ -275,5 +275,50 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             "string" => expr,
             _ => $"(({type})Enum.Parse(typeof({type}), {expr}))"
         };
+
+        public List<GeneratedSourceCode> GenerateEnums(List<EnumSchema> enumSchemas)
+        {
+            _targetDataNamespace = Settings.Default.RootNamespace;
+
+            var result = new List<GeneratedSourceCode>();
+            if (enumSchemas == null || enumSchemas.Count == 0)
+                return result;
+
+            foreach (var schema in enumSchemas)
+            {
+                result.Add(new GeneratedSourceCode(
+                    $"{schema.EnumName}.cs",
+                    GenerateEnumContent(schema),
+                    SourceCategory.Enums
+                ));
+            }
+
+            return result;
+        }
+
+        private string GenerateEnumContent(EnumSchema schema)
+        {
+            var sb = new StringBuilder();
+
+            if (schema.EnumType == EnumType.Flag)
+                WriteLine(sb, "using System;");
+            WriteLine(sb);
+            WriteLine(sb, $"namespace {_targetDataNamespace}");
+            WriteLine(sb, "{");
+
+            if (schema.EnumType == EnumType.Flag)
+                WriteLine(sb, "\t[Flags]");
+
+            WriteLine(sb, $"\tpublic enum {schema.EnumName}");
+            WriteLine(sb, "\t{");
+
+            foreach (var entry in schema.Entries)
+                WriteLine(sb, $"\t\t{entry.Name} = {entry.Value},");
+
+            WriteLine(sb, "\t}");
+            WriteLine(sb, "}");
+
+            return sb.ToString();
+        }
     }
 }

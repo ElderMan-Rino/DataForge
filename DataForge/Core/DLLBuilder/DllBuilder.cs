@@ -44,6 +44,7 @@ namespace Elder.DataForge.Core.DllBuilder
 
                 string rootOutputPath = Settings.Default.OutputPath;
                 string gameDataPath = Path.Combine(rootOutputPath, SourceCategory.GameData.ToString());
+                string enumsPath = Path.Combine(rootOutputPath, SourceCategory.Enums.ToString());
                 string resolverPath = Path.Combine(rootOutputPath, DataForgeConsts.Resolver);
                 string sourceFolderPath = Path.Combine(rootOutputPath, "_TempMpcProject");
                 string dllsDirectory = Path.Combine(rootOutputPath, "Dlls");
@@ -88,8 +89,12 @@ namespace Elder.DataForge.Core.DllBuilder
                 UpdateProgressValue(30f);
 
                 // 2. .csproj 생성
+                string enumsCompile = Directory.Exists(enumsPath)
+                    ? $"\n    <Compile Include=\"{enumsPath}\\**\\*.cs\" />"
+                    : string.Empty;
+
                 string compileItems = $@"
-    <Compile Include=""{gameDataPath}\**\*.cs"" />
+    <Compile Include=""{gameDataPath}\**\*.cs"" />{enumsCompile}
     <Compile Include=""{resolverPath}\**\*.cs"" />
 ";
 

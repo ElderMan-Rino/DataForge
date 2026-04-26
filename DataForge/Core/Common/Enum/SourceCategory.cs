@@ -6,6 +6,7 @@
         EditorData,
         GameData,
         Utility,
-        UnityScripts 
+        UnityScripts,
+        Enums
     }
 }
