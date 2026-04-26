@@ -15,11 +15,7 @@ namespace Elder.SkillTrial.Resources.Data
 		public static void Bake(string sourcePath, string savePath, byte[] encryptionKeyPartB)
 		{
 			var rawBytes = File.ReadAllBytes(sourcePath);
-			var resolver = CompositeResolver.Create(
-				DynamicEnumAsStringResolver.Instance,
-				StandardResolver.Instance
-			);
-			var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
+			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 			var dtoList = MessagePackSerializer.Deserialize<List<BlobSceneInfoEditorData>>(rawBytes, options);
 
 			var builder = new BlobBuilder(Allocator.Temp);
