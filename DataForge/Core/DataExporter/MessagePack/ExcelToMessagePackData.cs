@@ -136,6 +136,8 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                 {
                     if (row.Count > idx && !string.IsNullOrEmpty(row[idx]))
                         list.Add(ConvertToPrimitive(baseType, row[idx], enumValueMap));
+                    else
+                        list.Add(GetDefaultValueForPrimitive(baseType, enumValueMap));
                 }
                 return list;
             }
@@ -197,16 +199,14 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
 
         private object ResolveEnumValue(string enumTypeName, string value, Dictionary<string, Dictionary<string, int>> enumValueMap)
         {
-            // 숫자가 직접 입력된 경우
             if (int.TryParse(value, out int directInt))
                 return directInt;
 
-            // Enum 이름 조회
             if (enumValueMap.TryGetValue(enumTypeName, out var entryMap) &&
                 entryMap.TryGetValue(value, out int enumInt))
                 return enumInt;
 
-            // 매핑 실패 시 0 반환
+            _updateOutputLog.OnNext($"[WARN] Enum '{enumTypeName}' has no entry '{value}' — defaulting to 0");
             return 0;
         }
     }

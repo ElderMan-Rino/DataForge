@@ -85,9 +85,9 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "");
             WriteLine(sb, $"namespace {_targetDataNamespace}");
             WriteLine(sb, "{");
-            WriteLine(sb, "\tpublic static class GeneratedBlobLoader");
+            WriteLine(sb, "\tpublic sealed class GeneratedBlobLoader : IGameDataLoader");
             WriteLine(sb, "\t{");
-            WriteLine(sb, "\t\tpublic static async UniTask LoadAllDataAsync(IDataSheetLoader sheetLoader)");
+            WriteLine(sb, "\t\tpublic async UniTask LoadAllAsync(IDataSheetLoader sheetLoader)");
             WriteLine(sb, "\t\t{");
 
             if (activeSheets.Count == 1)
@@ -109,6 +109,11 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
                 WriteLine(sb, "\t\t\t);");
             }
 
+            WriteLine(sb, "\t\t}");
+            WriteLine(sb, "");
+            WriteLine(sb, "\t\tpublic async UniTask LoadAsync<T>(IDataSheetLoader sheetLoader, string key) where T : unmanaged");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\tawait sheetLoader.LoadSheetAsync<T>(key);");
             WriteLine(sb, "\t\t}");
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
@@ -146,7 +151,7 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, $"namespace {_targetDataNamespace}\n{{");
             WriteLine(sb, $"\tpublic struct {name}\n\t{{");
 
-            foreach (var f in fields)
+            foreach (var f in fields.OrderByDescending(f => f.TotalSize))
                 WriteLine(sb, $"\t\tpublic {f.UnmanagedType} {f.Name};");
 
             WriteLine(sb, "\t}\n}");
@@ -168,11 +173,13 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
         {
             var sb = new StringBuilder();
             WriteLine(sb, "#if UNITY_EDITOR");
-            WriteLine(sb, "using Elder.SkillTrial.Editor.Crypto;");
+            WriteLine(sb, "using Elder.Framework.Crypto;");
             WriteLine(sb, "using MessagePack;");
             WriteLine(sb, "using MessagePack.Resolvers;");
             WriteLine(sb, "using System.Collections.Generic;");
             WriteLine(sb, "using System.IO;");
+            WriteLine(sb, "using System.Linq;");
+            WriteLine(sb, "using System.Runtime.InteropServices;");
             WriteLine(sb, "using Unity.Collections;");
             WriteLine(sb, "using Unity.Entities;");
             WriteLine(sb, "using Unity.Entities.Serialization;");
@@ -185,7 +192,25 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "\t\t{");
             WriteLine(sb, "\t\t\tvar rawBytes = File.ReadAllBytes(sourcePath);");
             WriteLine(sb, "\t\t\tvar options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);");
-            WriteLine(sb, $"\t\t\tvar dtoList = MessagePackSerializer.Deserialize<List<{dtoName}>>(rawBytes, options);");
+            WriteLine(sb, $"\t\t\tvar rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);");
+
+            var orderedByKey = fields.OrderBy(f => f.KeyIndex).ToList();
+            var ctorArgList = string.Join(", ", orderedByKey.Select(f =>
+            {
+                string baseType = f.ManagedType.Replace("List<", "").Replace(">", "");
+                if (f.IsList)
+                    return $"((System.Collections.IEnumerable)row[{f.KeyIndex}]).Cast<object>().Select(x => ({baseType})System.Convert.ChangeType(x, typeof({baseType}))).ToList()";
+                return baseType switch
+                {
+                    "int" => $"System.Convert.ToInt32(row[{f.KeyIndex}])",
+                    "long" => $"System.Convert.ToInt64(row[{f.KeyIndex}])",
+                    "float" => $"System.Convert.ToSingle(row[{f.KeyIndex}])",
+                    "bool" => $"System.Convert.ToBoolean(row[{f.KeyIndex}])",
+                    "string" => $"row[{f.KeyIndex}]?.ToString() ?? string.Empty",
+                    _ => $"({baseType})System.Convert.ToInt32(row[{f.KeyIndex}])"
+                };
+            }));
+            WriteLine(sb, $"\t\t\tvar dtoList = rawList.Select(row => new {dtoName}({ctorArgList})).ToList();");
             WriteLine(sb, "");
             WriteLine(sb, "\t\t\tvar builder = new BlobBuilder(Allocator.Temp);");
             WriteLine(sb, $"\t\t\tref {tableName}Root root = ref builder.ConstructRoot<{tableName}Root>();");
@@ -217,10 +242,9 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "");
             WriteLine(sb, "\t\t\tunsafe");
             WriteLine(sb, "\t\t\t{");
-            WriteLine(sb, "\t\t\t\tvar plainSpan = new System.ReadOnlySpan<byte>(writer.Data, writer.Length);");
-            WriteLine(sb, "\t\t\t\t// [HEAP] 키 복사본 — AesEncryptionProvider 생성자가 원본을 ZeroMemory로 소거하므로 복사 필수");
-            WriteLine(sb, "\t\t\t\tbyte[] keyPartBCopy = (byte[])encryptionKeyPartB.Clone();");
-            WriteLine(sb, "\t\t\t\tBlobEditorEncryptionHelper.WriteEncrypted(plainSpan, savePath, keyPartBCopy);");
+            WriteLine(sb, "\t\t\t\tvar plainBytes = new byte[writer.Length];");
+            WriteLine(sb, "\t\t\t\tMarshal.Copy((System.IntPtr)writer.Data, plainBytes, 0, writer.Length);");
+            WriteLine(sb, $"\t\t\t\tElder.SkillTrial.Editor.Crypto.BlobEditorEncryptionHelper.WriteEncrypted(plainBytes, savePath, encryptionKeyPartB);");
             WriteLine(sb, "\t\t\t}");
             WriteLine(sb, "");
             WriteLine(sb, "\t\t\twriter.Dispose();");

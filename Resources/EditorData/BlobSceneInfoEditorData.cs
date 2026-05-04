@@ -7,18 +7,18 @@ namespace Elder.SkillTrial.Resources.Data
 	[MessagePackObject]
 	public readonly struct BlobSceneInfoEditorData
 	{
-		[Key(1)] public readonly string key;
-		[Key(3)] public readonly string SceneKey;
-		[Key(0)] public readonly int id;
-		[Key(2)] public readonly SceneLoadType LoadMode;
+		[Key(0)] public readonly string Key;
+		[Key(1)] public readonly string SceneKey;
+		[Key(2)] public readonly int Id;
+		[Key(3)] public readonly SceneLoadType LoadMode;
 
 		[SerializationConstructor]
-		public BlobSceneInfoEditorData(int id, string key, SceneLoadType loadMode, string sceneKey)
+		public BlobSceneInfoEditorData(string key, string sceneKey, int id, SceneLoadType loadMode)
 		{
-			this.id = id;
-			this.key = key;
-			this.LoadMode = loadMode;
+			this.Key = key;
 			this.SceneKey = sceneKey;
+			this.Id = id;
+			this.LoadMode = loadMode;
 		}
 	}
 }

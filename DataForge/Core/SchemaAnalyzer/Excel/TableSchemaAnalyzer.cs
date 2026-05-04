@@ -81,12 +81,12 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
                 .ThenBy(x => x.Order)
                 .ToList();
 
-            return optimizedLayout.Select(x => new AnalyzedField(
+            return optimizedLayout.Select((x, sortedIndex) => new AnalyzedField(
                 x.Name,
                 char.ToLower(x.Name[0]) + x.Name.Substring(1),
                 x.MType,
                 x.UType,
-                x.OriginalIndex, // ✨ 정렬 후에도 원래의 순서 보존
+                sortedIndex, // KeyIndex = 정렬 후 위치 (MessagePack [Key(n)]과 일치)
                 x.Size,
                 x.IsList,
                 x.Indices

@@ -6,6 +6,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -38,11 +40,12 @@
 	<ItemGroup>
     <Compile Remove="DataForge\Libs\**" />
     <Compile Remove="Resources\**\*.cs" />
+    <Compile Remove="DumpExcel\**" />
     <EmbeddedResource Remove="DataForge\Libs\**" />
     <None Remove="DataForge\Libs\**" />
-    
+
     <None Remove="Resources\**\*.cs" />
-    
+
     <Page Remove="DataForge\Libs\**" />
 </ItemGroup>
 

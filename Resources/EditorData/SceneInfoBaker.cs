@@ -1,9 +1,11 @@
 ﻿#if UNITY_EDITOR
-using Elder.SkillTrial.Editor.Crypto;
+using Elder.Framework.Crypto;
 using MessagePack;
 using MessagePack.Resolvers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
@@ -16,7 +18,8 @@ namespace Elder.SkillTrial.Resources.Data
 		{
 			var rawBytes = File.ReadAllBytes(sourcePath);
 			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
-			var dtoList = MessagePackSerializer.Deserialize<List<BlobSceneInfoEditorData>>(rawBytes, options);
+			var rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);
+			var dtoList = rawList.Select(row => new BlobSceneInfoEditorData(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (SceneLoadType)System.Convert.ToInt32(row[3]))).ToList();
 
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref SceneInfoRoot root = ref builder.ConstructRoot<SceneInfoRoot>();
@@ -24,9 +27,9 @@ namespace Elder.SkillTrial.Resources.Data
 
 			for (int i = 0; i < dtoList.Count; i++)
 			{
-				builder.AllocateString(ref arrayBuilder[i].key, dtoList[i].key);
+				builder.AllocateString(ref arrayBuilder[i].Key, dtoList[i].Key);
 				builder.AllocateString(ref arrayBuilder[i].SceneKey, dtoList[i].SceneKey);
-				arrayBuilder[i].id = dtoList[i].id;
+				arrayBuilder[i].Id = dtoList[i].Id;
 				arrayBuilder[i].LoadMode = dtoList[i].LoadMode;
 			}
 
@@ -38,10 +41,9 @@ namespace Elder.SkillTrial.Resources.Data
 
 			unsafe
 			{
-				var plainSpan = new System.ReadOnlySpan<byte>(writer.Data, writer.Length);
-				// [HEAP] 키 복사본 — AesEncryptionProvider 생성자가 원본을 ZeroMemory로 소거하므로 복사 필수
-				byte[] keyPartBCopy = (byte[])encryptionKeyPartB.Clone();
-				BlobEditorEncryptionHelper.WriteEncrypted(plainSpan, savePath, keyPartBCopy);
+				var plainBytes = new byte[writer.Length];
+				Marshal.Copy((System.IntPtr)writer.Data, plainBytes, 0, writer.Length);
+				Elder.SkillTrial.Editor.Crypto.BlobEditorEncryptionHelper.WriteEncrypted(plainBytes, savePath, encryptionKeyPartB);
 			}
 
 			writer.Dispose();

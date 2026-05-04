@@ -15,7 +15,7 @@ namespace Elder.SkillTrial.Resources.Data.Convert
 			var id = (rowData.Count > 2 && !string.IsNullOrEmpty(rowData[2])) ? int.Parse(rowData[2]) : default;
 			var loadMode = (rowData.Count > 4 && !string.IsNullOrEmpty(rowData[4])) ? ((SceneLoadType)Enum.Parse(typeof(SceneLoadType), rowData[4])) : default;
 
-			return new BlobSceneInfoEditorData(id, key, loadMode, sceneKey);
+			return new BlobSceneInfoEditorData(key, sceneKey, id, loadMode);
 		}
 	}
 }

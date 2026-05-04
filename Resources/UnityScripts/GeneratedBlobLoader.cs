@@ -4,11 +4,16 @@ using Unity.Entities;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	public static class GeneratedBlobLoader
+	public sealed class GeneratedBlobLoader : IGameDataLoader
 	{
-		public static async UniTask LoadAllDataAsync(IDataSheetLoader sheetLoader)
+		public async UniTask LoadAllAsync(IDataSheetLoader sheetLoader)
 		{
 			await sheetLoader.LoadSheetAsync<SceneInfoRoot>("SceneInfo");
+		}
+
+		public async UniTask LoadAsync<T>(IDataSheetLoader sheetLoader, string key) where T : unmanaged
+		{
+			await sheetLoader.LoadSheetAsync<T>(key);
 		}
 	}
 }

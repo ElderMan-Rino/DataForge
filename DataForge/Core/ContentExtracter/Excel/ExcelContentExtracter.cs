@@ -92,33 +92,34 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
                     var fieldValues = new Dictionary<int, List<string>>();
                     var rows = new List<List<string>>();
 
-                    int rowCount = worksheet.Dimension?.Rows ?? 0;
-                    int colCount = worksheet.Dimension?.Columns ?? 0;
+                    int rowCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Row) : 0;
+                    int colCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Column) : 0;
                     var dataName = string.Empty;
 
                     for (int row = 1; row <= rowCount; row++)
                     {
                         var rowData = new List<string>();
-                        bool isDataRow = false;
+                        bool hasFieldDef = false;
+                        bool hasDataCell = false;
 
                         for (int col = 1; col <= colCount; col++)
                         {
                             string cellText = worksheet.Cells[row, col].Text;
                             ProcessCell(cellText, col, ref dataName, fieldDefinitions, fieldValues);
-                            if (!string.IsNullOrEmpty(cellText) &&
-                                !TryExtractVariableInfo(cellText, out _) &&
-                                !TryExtractDataName(cellText, out _))
-                            {
-                                isDataRow = true;
-                            }
 
                             rowData.Add(cellText);
+
+                            if (string.IsNullOrEmpty(cellText)) continue;
+
+                            if (TryExtractVariableInfo(cellText, out _) || TryExtractDataName(cellText, out _))
+                                hasFieldDef = true;
+                            else
+                                hasDataCell = true;
                         }
 
-                        if (isDataRow)
-                        {
+                        // 필드 정의 셀이 하나라도 있으면 헤더 행으로 간주하여 제외
+                        if (!hasFieldDef && hasDataCell)
                             rows.Add(rowData);
-                        }
                     }
                     sheetDatas.Add(sheetName, new ExcelSheetData(sheetName, dataName, fieldDefinitions, fieldValues, rows));
                 }
@@ -133,8 +134,8 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
             if (string.IsNullOrEmpty(enumName))
                 return null;
 
-            int rowCount = worksheet.Dimension?.Rows ?? 0;
-            int colCount = worksheet.Dimension?.Columns ?? 0;
+            int rowCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Row) : 0;
+            int colCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Column) : 0;
 
             _updateOutputLog.OnNext($"[Enum] Parsing sheet: {sheetName} (rows={rowCount}, cols={colCount})");
 

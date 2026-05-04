@@ -5,9 +5,9 @@ namespace Elder.SkillTrial.Resources.Data
 {
 	public struct BlobSceneInfoGameData
 	{
-		public BlobString key;
+		public BlobString Key;
 		public BlobString SceneKey;
-		public int id;
+		public int Id;
 		public SceneLoadType LoadMode;
 	}
 }
