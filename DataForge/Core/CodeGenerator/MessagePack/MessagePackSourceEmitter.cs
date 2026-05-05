@@ -35,45 +35,207 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
 
         public async Task<List<GeneratedSourceCode>> GenerateAsync(List<TableSchema> schemas)
         {
-            _targetDataNamespace = Settings.Default.RootNamespace;
-            _targetParserNamespace = Settings.Default.RootNamespace + ".Convert";
-
             var generatedFiles = new List<GeneratedSourceCode>();
 
-            if (schemas == null || !schemas.Any())
+            // ─── 언어 시트 / 일반 시트 분리 ──────────────────────────────────
+            var languageSchemas = schemas.Where(s => s.IsLanguageSheet).ToList();
+            var normalSchemas = schemas.Where(s => !s.IsLanguageSheet).ToList();
+
+            // ─── 일반 시트: 기존 로직 완전 동일 ──────────────────────────────
+            foreach (var schema in normalSchemas)
             {
-                UpdateProgressLevel("No schemas found to generate.");
-                UpdateProgressValue(100f);
-                return generatedFiles;
+                var dodName = $"{schema.TableName}Row";
+                var dtoName = string.IsNullOrEmpty(schema.DataName)
+                    ? schema.TableName : schema.DataName;
+
+                generatedFiles.Add(new GeneratedSourceCode(
+                    $"{dtoName}.cs",
+                    GenerateModelContent(dtoName, schema.AnalyzedFields),
+                    SourceCategory.SharedDTO));
+
+                generatedFiles.Add(new GeneratedSourceCode(
+                    $"{dodName}.cs",
+                    GenerateRuntimeContent(dodName, schema.AnalyzedFields),
+                    SourceCategory.UnityScripts));
+
+                generatedFiles.Add(new GeneratedSourceCode(
+                    $"{schema.TableName}Root.cs",
+                    GenerateRootContent(schema.TableName, dodName),
+                    SourceCategory.UnityScripts));
+
+                generatedFiles.Add(new GeneratedSourceCode(
+                    $"{schema.TableName}Baker.cs",
+                    GenerateBakerContent(schema.TableName, dtoName, dodName,
+                        schema.AnalyzedFields),
+                    SourceCategory.EditorScripts));
             }
 
-            UpdateProgressLevel($"Starting Source Code Generation... (Total: {schemas.Count} tables)");
-
-            for (int i = 0; i < schemas.Count; i++)
+            // ─── 언어 시트: DataName 기준 공통 생성 ──────────────────────────
+            if (languageSchemas.Any())
             {
-                var schema = schemas[i];
-                float progress = (float)(i + 1) / schemas.Count * 100f;
+                // DataName 기준으로 그룹핑 ("LanguageEntry" 단위)
+                var languageGroups = languageSchemas
+                    .GroupBy(s => s.DataName)
+                    .ToList();
 
-                UpdateProgressLevel($"Generating codes for Table: {schema.TableName} ({i + 1}/{schemas.Count})");
+                foreach (var group in languageGroups)
+                {
+                    var dataName = group.Key;              // "LanguageEntry"
+                    var dodName = $"{dataName}Row";       // "LanguageEntryRow"
+                    var rootName = $"{dataName}Root";      // "LanguageEntryRoot"
+                    var bakerName = $"{dataName}Baker";     // "LanguageEntryBaker"
+                    var firstSchema = group.First();
 
-                var dtoName = $"{MessagePackConsts.Prefix}{schema.TableName}{MessagePackConsts.DTOSuffix}";
-                var dodName = $"{MessagePackConsts.Prefix}{schema.TableName}{MessagePackConsts.DODSuffix}";
-                var rootName = $"{schema.TableName}Root";
+                    // DTO — DataName 기준 1개만 생성
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{dataName}.cs",
+                        GenerateModelContent(dataName, firstSchema.AnalyzedFields),
+                        SourceCategory.SharedDTO));
 
-                generatedFiles.Add(new GeneratedSourceCode($"{dtoName}.cs", GenerateModelContent(dtoName, schema.AnalyzedFields), SourceCategory.EditorData));
-                generatedFiles.Add(new GeneratedSourceCode($"{dtoName}.Parser.cs", GenerateParserContent(dtoName, schema.AnalyzedFields), SourceCategory.Parser));
-                generatedFiles.Add(new GeneratedSourceCode($"{dodName}.cs", GenerateRuntimeContent(dodName, schema.AnalyzedFields), SourceCategory.GameData));
-                generatedFiles.Add(new GeneratedSourceCode($"{rootName}.cs", GenerateRootContent(schema.TableName, dodName), SourceCategory.GameData));
-                generatedFiles.Add(new GeneratedSourceCode($"{schema.TableName}Baker.cs", GenerateBakerContent(schema.TableName, dtoName, dodName, schema.AnalyzedFields), SourceCategory.EditorData));
+                    // Row — DataName 기준 1개만 생성
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{dodName}.cs",
+                        GenerateRuntimeContent(dodName, firstSchema.AnalyzedFields),
+                        SourceCategory.UnityScripts));
 
-                UpdateProgressValue(progress);
-                await Task.Delay(1);
+                    // Root — DataName 기준 1개만 생성
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{rootName}.cs",
+                        GenerateRootContent(dataName, dodName),
+                        SourceCategory.UnityScripts));
+
+                    // Baker — DataName 기준 1개, 모든 TableName의 Bake() 포함
+                    var tableNames = group.Select(s => s.TableName).ToList();
+                    // ["UI_Ko", "UI_En", "Quest_Ko", "Quest_En", ...]
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{bakerName}.cs",
+                        GenerateLanguageBakerContent(
+                            bakerName, dataName, dodName, rootName,
+                            tableNames, firstSchema.AnalyzedFields),
+                        SourceCategory.EditorScripts));
+                }
             }
 
-            UpdateProgressLevel("All source codes have been generated successfully.");
             return await Task.FromResult(generatedFiles);
         }
+        private string GenerateLanguageBakerContent(
+    string bakerName,      // "LanguageEntryBaker"
+    string dtoName,        // "LanguageEntry"
+    string dodName,        // "LanguageEntryRow"
+    string rootName,       // "LanguageEntryRoot"
+    List<string> tableNames, // ["UI_Ko", "UI_En", "Quest_Ko", ...]
+    List<AnalyzedField> fields)
+        {
+            var sb = new StringBuilder();
+            WriteLine(sb, "#if UNITY_EDITOR");
+            WriteLine(sb, "using Elder.Framework.Crypto;");
+            WriteLine(sb, "using MessagePack;");
+            WriteLine(sb, "using MessagePack.Resolvers;");
+            WriteLine(sb, "using System.Collections.Generic;");
+            WriteLine(sb, "using System.IO;");
+            WriteLine(sb, "using System.Linq;");
+            WriteLine(sb, "using System.Runtime.InteropServices;");
+            WriteLine(sb, "using Unity.Collections;");
+            WriteLine(sb, "using Unity.Entities;");
+            WriteLine(sb, "using Unity.Entities.Serialization;");
+            WriteLine(sb, "");
+            WriteLine(sb, $"namespace {_targetDataNamespace}");
+            WriteLine(sb, "{");
+            WriteLine(sb, $"\tpublic static class {bakerName}");
+            WriteLine(sb, "\t{");
 
+            // ─── 공통 ParseDto ────────────────────────────────────────────────
+            var orderedByKey = fields.OrderBy(f => f.KeyIndex).ToList();
+            var ctorArgList = string.Join(", ", orderedByKey.Select(f =>
+            {
+                string baseType = f.ManagedType.Replace("List<", "").Replace(">", "");
+                return baseType switch
+                {
+                    "int" => $"System.Convert.ToInt32(row[{f.KeyIndex}])",
+                    "long" => $"System.Convert.ToInt64(row[{f.KeyIndex}])",
+                    "float" => $"System.Convert.ToSingle(row[{f.KeyIndex}])",
+                    "bool" => $"System.Convert.ToBoolean(row[{f.KeyIndex}])",
+                    "string" => $"row[{f.KeyIndex}]?.ToString() ?? string.Empty",
+                    _ => $"({baseType})System.Convert.ToInt32(row[{f.KeyIndex}])"
+                };
+            }));
+
+            WriteLine(sb, $"\t\tprivate static List<{dtoName}> ParseDto(string sourcePath)");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\tvar rawBytes = File.ReadAllBytes(sourcePath);");
+            WriteLine(sb, "\t\t\tvar options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);");
+            WriteLine(sb, $"\t\t\tvar rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);");
+            WriteLine(sb, $"\t\t\treturn rawList.Select(row => new {dtoName}({ctorArgList})).ToList();");
+            WriteLine(sb, "\t\t}");
+            WriteLine(sb, "");
+
+            // ─── 공통 SaveBlob ────────────────────────────────────────────────
+            WriteLine(sb, $"\t\tprivate static void SaveBlob(");
+            WriteLine(sb, $"\t\t\tBlobAssetReference<{rootName}> blobRef,");
+            WriteLine(sb, "\t\t\tstring savePath,");
+            WriteLine(sb, "\t\t\tbyte[] encryptionKeyPartB)");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\tvar writer = new MemoryBinaryWriter();");
+            WriteLine(sb, "\t\t\twriter.Write(blobRef);");
+            WriteLine(sb, "\t\t\tunsafe");
+            WriteLine(sb, "\t\t\t{");
+            WriteLine(sb, "\t\t\t\tvar plainBytes = new byte[writer.Length];");
+            WriteLine(sb, "\t\t\t\tSystem.Runtime.InteropServices.Marshal.Copy((System.IntPtr)writer.Data, plainBytes, 0, writer.Length);");
+            WriteLine(sb, "\t\t\t\tElder.SkillTrial.Editor.Crypto.BlobEditorEncryptionHelper.WriteEncrypted(plainBytes, savePath, encryptionKeyPartB);");
+            WriteLine(sb, "\t\t\t}");
+            WriteLine(sb, "\t\t\twriter.Dispose();");
+            WriteLine(sb, "\t\t\tblobRef.Dispose();");
+            WriteLine(sb, "\t\t}");
+            WriteLine(sb, "");
+
+            // ─── 공통 BakeInternal ────────────────────────────────────────────
+            WriteLine(sb, "\t\tprivate static void BakeInternal(");
+            WriteLine(sb, "\t\t\tstring sourcePath, string savePath, byte[] encryptionKeyPartB)");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\tvar dtoList = ParseDto(sourcePath);");
+            WriteLine(sb, $"\t\t\tvar builder = new BlobBuilder(Allocator.Temp);");
+            WriteLine(sb, $"\t\t\tref {rootName} root = ref builder.ConstructRoot<{rootName}>();");
+            WriteLine(sb, "\t\t\tvar arrayBuilder = builder.Allocate(ref root.Rows, dtoList.Count);");
+            WriteLine(sb, "\t\t\tfor (int i = 0; i < dtoList.Count; i++)");
+            WriteLine(sb, "\t\t\t{");
+
+            foreach (var f in fields)
+            {
+                if (f.UnmanagedType == "BlobString")
+                    WriteLine(sb, $"\t\t\t\tbuilder.AllocateString(ref arrayBuilder[i].{f.Name}, dtoList[i].{f.Name});");
+                else if (f.IsList)
+                {
+                    WriteLine(sb, $"\t\t\t\tvar {f.Name}Builder = builder.Allocate(ref arrayBuilder[i].{f.Name}, dtoList[i].{f.Name}.Count);");
+                    WriteLine(sb, $"\t\t\t\tfor (int j = 0; j < dtoList[i].{f.Name}.Count; j++) {f.Name}Builder[j] = dtoList[i].{f.Name}[j];");
+                }
+                else
+                    WriteLine(sb, $"\t\t\t\tarrayBuilder[i].{f.Name} = dtoList[i].{f.Name};");
+            }
+
+            WriteLine(sb, "\t\t\t}");
+            WriteLine(sb, $"\t\t\tvar blobRef = builder.CreateBlobAssetReference<{rootName}>(Allocator.Temp);");
+            WriteLine(sb, "\t\t\tbuilder.Dispose();");
+            WriteLine(sb, "\t\t\tSaveBlob(blobRef, savePath, encryptionKeyPartB);");
+            WriteLine(sb, "\t\t}");
+            WriteLine(sb, "");
+
+            // ─── 시트별 진입점 (tableName당 1개) ─────────────────────────────
+            // MessageToBlobConverter가 "{TableName}Baker.Bake()" 규칙으로 탐색하므로
+            // 각 TableName에 대한 얇은 래퍼 클래스를 생성
+            foreach (var tableName in tableNames)
+            {
+                WriteLine(sb, $"\t\t// {tableName} 시트 진입점");
+                WriteLine(sb, $"\t\tpublic static void Bake_{tableName}(");
+                WriteLine(sb, "\t\t\tstring sourcePath, string savePath, byte[] encryptionKeyPartB)");
+                WriteLine(sb, "\t\t\t=> BakeInternal(sourcePath, savePath, encryptionKeyPartB);");
+                WriteLine(sb, "");
+            }
+
+            WriteLine(sb, "\t}");
+            WriteLine(sb, "}");
+            WriteLine(sb, "#endif");
+            return sb.ToString();
+        }
         public string GenerateDataLoaderContent(List<SheetEntry> activeSheets)
         {
             _targetDataNamespace = Settings.Default.RootNamespace;
@@ -333,7 +495,12 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "\t{");
 
             foreach (var entry in schema.Entries)
+            {
+                if (!string.IsNullOrEmpty(entry.Desc))
+                    WriteLine(sb, $"\t\t/// <summary>{entry.Desc}</summary>");
+
                 WriteLine(sb, $"\t\t{entry.Name} = {entry.Value},");
+            }
 
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");

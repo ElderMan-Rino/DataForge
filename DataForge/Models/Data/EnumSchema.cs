@@ -2,7 +2,7 @@ namespace Elder.DataForge.Models.Data
 {
     public enum EnumType { Normal, Flag }
 
-    public record EnumEntry(string Name, int Value);
+    public record EnumEntry(string Name, int Value, string Desc = "");
 
     public class EnumSchema
     {

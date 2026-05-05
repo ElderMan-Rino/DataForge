@@ -7,6 +7,8 @@
         GameData,
         Utility,
         UnityScripts,
-        Enums
+        Enums,
+        EditorScripts,
+        SharedDTO
     }
 }

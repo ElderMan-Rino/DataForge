@@ -4,6 +4,7 @@ using Elder.DataForge.Models.Data.Excel;
 using Elder.DataForge.Core.CodeGenerator.MessagePack;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
 {
@@ -17,6 +18,11 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
             {
                 if (document is not ExcelContentData excelData) continue;
 
+                bool isLanguageFile = excelData.SheetDatas.Values
+                .Any(sheet => !string.IsNullOrEmpty(sheet.LanguageCode));
+                string fileBaseName =
+                Path.GetFileNameWithoutExtension(excelData.Name); // "UI"
+
                 foreach (var sheet in excelData.SheetDatas.Values)
                 {
                     var analyzedFields = AnalyzeSheetFields(sheet);
@@ -24,22 +30,36 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
                     foreach (var row in sheet.Rows)
                     {
                         if (row == null || row.Count == 0) continue;
-
                         bool hasSummaryTag = row.Any(cell =>
                             cell != null &&
-                            cell.Trim().Equals("</summary>", StringComparison.OrdinalIgnoreCase)
-                        );
-
+                            cell.Trim().Equals("</summary>",
+                                StringComparison.OrdinalIgnoreCase));
                         if (hasSummaryTag) continue;
-
                         filteredRows.Add(row);
+                    }
+
+                    string tableName;
+                    if (isLanguageFile)
+                    {
+                        // LanguageCode 있음: "UI_Ko"
+                        // LanguageCode 없음: 언어 파일 내 비언어 시트 (예외 케이스, SheetName 사용)
+                        tableName = !string.IsNullOrEmpty(sheet.LanguageCode)
+                            ? $"{fileBaseName}_{sheet.LanguageCode}"
+                            : sheet.SheetName;
+                    }
+                    else
+                    {
+                        tableName = sheet.SheetName; // 기존 동작
                     }
 
                     var schema = new TableSchema
                     {
-                        TableName = sheet.SheetName,
+                        TableName = tableName,
+                        DataName = sheet.DataName,
                         AnalyzedFields = analyzedFields,
-                        RawRows = filteredRows // 필터링된 행들만 할당
+                        RawRows = filteredRows,
+                        IsLanguageSheet = isLanguageFile
+                            && !string.IsNullOrEmpty(sheet.LanguageCode), // ← 추가
                     };
 
                     schemas.Add(schema);

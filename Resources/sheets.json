@@ -3,6 +3,34 @@
     {
       "tableName": "SceneInfo",
       "isActive": true
+    },
+    {
+      "tableName": "BootstrapLocale_Ko",
+      "isActive": true
+    },
+    {
+      "tableName": "BootstrapLocale_Jp",
+      "isActive": true
+    },
+    {
+      "tableName": "BootstrapLocale_En",
+      "isActive": true
+    },
+    {
+      "tableName": "ErrorCode",
+      "isActive": true
+    },
+    {
+      "tableName": "ErrorMsgLocale_Ko",
+      "isActive": true
+    },
+    {
+      "tableName": "ErrorMsgLocale_Jp",
+      "isActive": true
+    },
+    {
+      "tableName": "ErrorMsgLocale_En",
+      "isActive": true
     }
   ]
 }

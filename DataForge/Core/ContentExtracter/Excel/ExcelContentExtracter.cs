@@ -17,9 +17,13 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
 
         private const string Colon = ":";
         private const string DataName = "DataName";
+        private const string Language = "Language"; // ← 추가
         private const string EnumSheetPrefix = "Enum_";
         private const string EnumNameColumn = "EnumName";
         private const string EnumValueColumn = "Value";
+        private const string IgnorePrefix = "#";
+        private const string EnumDescColumn = "#Desc";
+
         private static readonly Regex EnumTypeTagRegex = new Regex(@"<EnumType=(\w+)>", RegexOptions.IgnoreCase);
 
         private Subject<string> _updateProgressLevel = new();
@@ -63,38 +67,39 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
             string fileName = info.Name;
             string directory = info.Path;
             string filePath = Path.Combine(directory, fileName);
-            if (!File.Exists(filePath))
-                return null;
+            if (!File.Exists(filePath)) return null;
 
             ExcelPackage.License.SetNonCommercialPersonal("ElderMan");
             var sheetDatas = new Dictionary<string, ExcelSheetData>();
             var enumSchemas = new List<EnumSchema>();
             var fileInfo = new FileInfo(filePath);
+
             using (var package = new ExcelPackage(fileInfo))
             {
-                var workSheets = package.Workbook.Worksheets;
-                foreach (var worksheet in workSheets)
+                foreach (var worksheet in package.Workbook.Worksheets)
                 {
                     string sheetName = worksheet.Name;
 
-                    if (sheetName.StartsWith(EnumSheetPrefix, StringComparison.OrdinalIgnoreCase))
+                    if (sheetName.StartsWith(EnumSheetPrefix,
+                            StringComparison.OrdinalIgnoreCase))
                     {
                         var enumSchema = ExtractEnumSheet(worksheet, sheetName);
-                        if (enumSchema != null)
-                            enumSchemas.Add(enumSchema);
+                        if (enumSchema != null) enumSchemas.Add(enumSchema);
                         continue;
                     }
 
-                    if (sheetDatas.ContainsKey(sheetName))
-                        continue;
+                    if (sheetDatas.ContainsKey(sheetName)) continue;
 
                     var fieldDefinitions = new List<FieldDefinition>();
                     var fieldValues = new Dictionary<int, List<string>>();
                     var rows = new List<List<string>>();
-
-                    int rowCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Row) : 0;
-                    int colCount = worksheet.Cells.Any() ? worksheet.Cells.Max(c => c.End.Column) : 0;
                     var dataName = string.Empty;
+                    var languageCode = string.Empty; // ← 추가
+
+                    int rowCount = worksheet.Cells.Any()
+                        ? worksheet.Cells.Max(c => c.End.Row) : 0;
+                    int colCount = worksheet.Cells.Any()
+                        ? worksheet.Cells.Max(c => c.End.Column) : 0;
 
                     for (int row = 1; row <= rowCount; row++)
                     {
@@ -105,27 +110,59 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
                         for (int col = 1; col <= colCount; col++)
                         {
                             string cellText = worksheet.Cells[row, col].Text;
-                            ProcessCell(cellText, col, ref dataName, fieldDefinitions, fieldValues);
+
+                            // ─── <Language> 태그 수집 ──────────────────────
+                            // 아직 못 찾은 경우에만 시도
+                            if (string.IsNullOrEmpty(languageCode)
+                                && TryExtractLanguageCode(cellText, out var parsedCode))
+                            {
+                                languageCode = parsedCode;
+                                rowData.Add(cellText);
+                                // 헤더 행으로 간주 → rows에서 제외
+                                hasFieldDef = true;
+                                continue;
+                            }
+
+                            ProcessCell(cellText, col, ref dataName,
+                                fieldDefinitions, fieldValues);
 
                             rowData.Add(cellText);
 
                             if (string.IsNullOrEmpty(cellText)) continue;
 
-                            if (TryExtractVariableInfo(cellText, out _) || TryExtractDataName(cellText, out _))
+                            if (TryExtractVariableInfo(cellText, out _)
+                                || TryExtractDataName(cellText, out _))
                                 hasFieldDef = true;
                             else
                                 hasDataCell = true;
                         }
 
-                        // 필드 정의 셀이 하나라도 있으면 헤더 행으로 간주하여 제외
                         if (!hasFieldDef && hasDataCell)
                             rows.Add(rowData);
                     }
-                    sheetDatas.Add(sheetName, new ExcelSheetData(sheetName, dataName, fieldDefinitions, fieldValues, rows));
+
+                    sheetDatas.Add(sheetName, new ExcelSheetData(
+                        sheetName,
+                        dataName,
+                        languageCode, // ← 추가
+                        fieldDefinitions,
+                        fieldValues,
+                        rows));
                 }
             }
 
             return new ExcelContentData(fileName, sheetDatas, enumSchemas);
+        }
+
+        private bool TryExtractLanguageCode(string cellValue, out string languageCode)
+        {
+            languageCode = string.Empty;
+            if (string.IsNullOrEmpty(cellValue)) return false;
+            if (!StringHelpers.ContainsHtmlTag(cellValue)) return false;
+            if (!StringHelpers.ContainsText(cellValue, Language)) return false;
+
+            languageCode = StringHelpers.ExtractHtmlTagContent(cellValue);
+            return !string.IsNullOrEmpty(languageCode);
         }
 
         private EnumSchema ExtractEnumSheet(ExcelWorksheet worksheet, string sheetName)
@@ -142,6 +179,7 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
             var enumType = EnumType.Normal;
             int nameColIndex = -1;
             int valueColIndex = -1;
+            int descColIndex = -1;
             bool headerFound = false;
             var entries = new List<EnumEntry>();
 
@@ -185,6 +223,12 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
                             valueColIndex = col;
                             rowHasData = true;
                         }
+                        else if (colName.Equals(EnumDescColumn, StringComparison.OrdinalIgnoreCase))
+                        {
+                            descColIndex = col;
+                            rowHasData = true;
+                        }
+
                     }
                 }
 
@@ -211,7 +255,9 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
                         entryValue = parsed;
                 }
 
-                entries.Add(new EnumEntry(entryName, entryValue));
+                string entryDesc = descColIndex > 0 ? worksheet.Cells[row, descColIndex].Text?.Trim() ?? "" : "";
+
+                entries.Add(new EnumEntry(entryName, entryValue, entryDesc));
                 _updateOutputLog.OnNext($"[Enum] Entry: {entryName}={entryValue}");
             }
 
@@ -250,8 +296,8 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
         private bool TryExtractVariableInfo(string cellValue, out string[] variableInfo)
         {
             variableInfo = default;
-            if (!StringHelpers.ContainsText(cellValue, Colon))
-                return false;
+            if (!StringHelpers.ContainsText(cellValue, Colon)) return false;
+            if (cellValue.TrimStart().StartsWith(IgnorePrefix)) return false;
 
             var segments = cellValue.Split(Colon);
             if (segments == null || segments.Length <= 0 || segments.Length > 2)
