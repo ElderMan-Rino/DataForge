@@ -34,16 +34,31 @@ namespace Elder.DataForge.Core.Registry
             File.WriteAllText(RegistryFilePath, json);
         }
 
-        public SheetRegistry Merge(SheetRegistry existing, IEnumerable<string> newTableNames)
+        // ← 기존 string 기반 Merge 제거, TableSchema 기반으로 교체
+        public SheetRegistry Merge(SheetRegistry existing, IEnumerable<TableSchema> schemas)
         {
-            var newSet = new HashSet<string>(newTableNames, StringComparer.Ordinal);
+            var schemaMap = schemas.ToDictionary(s => s.TableName, s => s);
 
-            existing.Sheets.RemoveAll(s => !newSet.Contains(s.TableName));
+            existing.Sheets.RemoveAll(s => !schemaMap.ContainsKey(s.TableName));
 
-            foreach (var tableName in newSet)
+            foreach (var (tableName, schema) in schemaMap)
             {
-                if (!existing.Sheets.Any(s => s.TableName == tableName))
-                    existing.Sheets.Add(new SheetEntry { TableName = tableName });
+                var entry = existing.Sheets.FirstOrDefault(s => s.TableName == tableName);
+                if (entry == null)
+                {
+                    existing.Sheets.Add(new SheetEntry
+                    {
+                        TableName = tableName,
+                        DataName = schema.DataName,
+                        IsLanguageSheet = schema.IsLanguageSheet,
+                    });
+                }
+                else
+                {
+                    // 기존 항목도 최신 정보로 갱신
+                    entry.DataName = schema.DataName;
+                    entry.IsLanguageSheet = schema.IsLanguageSheet;
+                }
             }
 
             return existing;

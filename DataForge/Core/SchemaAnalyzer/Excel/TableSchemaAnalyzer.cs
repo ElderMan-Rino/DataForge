@@ -44,12 +44,12 @@ namespace Elder.DataForge.Core.SchemaAnalyzer.Excel
                         // LanguageCode 있음: "UI_Ko"
                         // LanguageCode 없음: 언어 파일 내 비언어 시트 (예외 케이스, SheetName 사용)
                         tableName = !string.IsNullOrEmpty(sheet.LanguageCode)
-                            ? $"{fileBaseName}_{sheet.LanguageCode}"
-                            : sheet.SheetName;
+                            ? $"{fileBaseName.Trim()}_{sheet.LanguageCode}"
+                            : sheet.SheetName.Trim();
                     }
                     else
                     {
-                        tableName = sheet.SheetName; // 기존 동작
+                        tableName = sheet.SheetName.Trim(); // 기존 동작
                     }
 
                     var schema = new TableSchema

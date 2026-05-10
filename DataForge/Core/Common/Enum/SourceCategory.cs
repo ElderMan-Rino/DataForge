@@ -6,7 +6,8 @@
         EditorData,
         GameData,
         Utility,
-        UnityScripts,
+        UnityScripts,   // Row, Root
+        BlobLoader,     // ← 추가: GeneratedBlobLoader.cs 전용
         Enums,
         EditorScripts,
         SharedDTO

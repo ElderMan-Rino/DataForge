@@ -1,8 +1,8 @@
 ﻿using Unity.Entities;
 namespace Elder.SkillTrial.Resources.Data
 {
-	public struct SceneInfoRoot
+	public struct AudioSettingsRoot
 	{
-		public BlobArray<SceneInfoRow> Rows;
+		public BlobArray<AudioSettingsRow> Rows;
 	}
 }

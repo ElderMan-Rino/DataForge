@@ -11,7 +11,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
-
 namespace Elder.DataForge.Core.CodeGenerator
 {
     public class SourceCodeGenerator : ISourceCodeGenerator
@@ -62,7 +61,6 @@ namespace Elder.DataForge.Core.CodeGenerator
             }
         }
 
-
         public async Task<bool> GenerateSourceCodeAsync(IReadOnlyList<DocumentInfoData> documentInfos)
         {
             UpdateProgressLevel("GenerateSourceCode Start");
@@ -84,8 +82,7 @@ namespace Elder.DataForge.Core.CodeGenerator
             // 레지스트리 병합 및 저장
             UpdateProgressLevel("Updating Sheet Registry...");
             var registry = _registryManager.Load();
-            var newTableNames = domainSchemas.Select(s => s.TableName);
-            registry = _registryManager.Merge(registry, newTableNames);
+            registry = _registryManager.Merge(registry, domainSchemas); // ← 수정
             _registryManager.Save(registry);
 
             var generateSourceCodes = await GenerateSourceCodesAsync(domainSchemas);
@@ -97,7 +94,7 @@ namespace Elder.DataForge.Core.CodeGenerator
 
             // GeneratedBlobLoader는 전체 레지스트리 기준으로 생성
             var activeSheets = _registryManager.GetSheets();
-            generateSourceCodes.Add(GenerateBlobLoader(activeSheets));
+            generateSourceCodes.AddRange(GenerateBlobLoaderFiles(activeSheets));
 
             // Enum 스크립트 생성
             var enumSchemas = CollectEnumSchemas(documentContents);
@@ -119,14 +116,13 @@ namespace Elder.DataForge.Core.CodeGenerator
             return true;
         }
 
-        private GeneratedSourceCode GenerateBlobLoader(List<SheetEntry> activeSheets)
+        private List<GeneratedSourceCode> GenerateBlobLoaderFiles(List<SheetEntry> activeSheets)
         {
-            // TableSchema 대신 SheetEntry 리스트를 받는 오버로드 추가
-            return new GeneratedSourceCode(
-                "GeneratedBlobLoader.cs",
-                _codeEmitter.GenerateDataLoaderContent(activeSheets),
-                SourceCategory.UnityScripts
-            );
+            return new List<GeneratedSourceCode>
+            {
+                new("SheetKey.cs",            _codeEmitter.GenerateSheetKeyContent(activeSheets),    SourceCategory.BlobLoader),
+                new("GeneratedBlobLoader.cs", _codeEmitter.GenerateDataLoaderContent(activeSheets),  SourceCategory.BlobLoader),
+            };
         }
 
         private async Task<Dictionary<string, DocumentContentData>> ExtractContentAsync(IReadOnlyList<DocumentInfoData> documentInfos)

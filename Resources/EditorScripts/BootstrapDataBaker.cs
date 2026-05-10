@@ -12,28 +12,27 @@ using Unity.Entities.Serialization;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	public static class SceneInfoBaker
+	public static class BootstrapDataBaker
 	{
 		public static void Bake(string sourcePath, string savePath, byte[] encryptionKeyPartB)
 		{
 			var rawBytes = File.ReadAllBytes(sourcePath);
 			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 			var rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);
-			var dtoList = rawList.Select(row => new BlobSceneInfoEditorData(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (SceneLoadType)System.Convert.ToInt32(row[3]))).ToList();
+			var dtoList = rawList.Select(row => new BootstrapData(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]))).ToList();
 
 			var builder = new BlobBuilder(Allocator.Temp);
-			ref SceneInfoRoot root = ref builder.ConstructRoot<SceneInfoRoot>();
+			ref BootstrapDataRoot root = ref builder.ConstructRoot<BootstrapDataRoot>();
 			var arrayBuilder = builder.Allocate(ref root.Rows, dtoList.Count);
 
 			for (int i = 0; i < dtoList.Count; i++)
 			{
 				builder.AllocateString(ref arrayBuilder[i].Key, dtoList[i].Key);
-				builder.AllocateString(ref arrayBuilder[i].SceneKey, dtoList[i].SceneKey);
+				builder.AllocateString(ref arrayBuilder[i].DataKey, dtoList[i].DataKey);
 				arrayBuilder[i].Id = dtoList[i].Id;
-				arrayBuilder[i].LoadMode = dtoList[i].LoadMode;
 			}
 
-			var blobRef = builder.CreateBlobAssetReference<SceneInfoRoot>(Allocator.Temp);
+			var blobRef = builder.CreateBlobAssetReference<BootstrapDataRoot>(Allocator.Temp);
 			builder.Dispose();
 
 			var writer = new MemoryBinaryWriter();

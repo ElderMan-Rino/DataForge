@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using MessagePack;
 
-namespace 
+namespace Elder.SkillTrial.Resources.Data
 {
 	[MessagePackObject]
 	public readonly struct SceneInfo

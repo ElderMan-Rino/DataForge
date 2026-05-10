@@ -1,7 +1,7 @@
 ﻿using System;
 using Unity.Entities;
 
-namespace 
+namespace Elder.SkillTrial.Resources.Data
 {
 	public struct SceneInfoRow
 	{

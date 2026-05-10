@@ -43,9 +43,17 @@ namespace Elder.DataForge.Core.DllBuilder
                 UpdateProgressValue(10f);
 
                 string rootOutputPath = Settings.Default.OutputPath;
+
+                // ─── DLL에 포함할 소스 폴더 ───────────────────────────────────
+                // GameData  : 일반 시트 DTO (MessagePack struct)
+                // SharedDTO : 언어 시트 DTO (MessagePack struct) ← 추가
+                // Enums     : Enum 타입
+                // Resolvers : MPC 생성 Resolver
                 string gameDataPath = Path.Combine(rootOutputPath, SourceCategory.GameData.ToString());
+                string sharedDtoPath = Path.Combine(rootOutputPath, SourceCategory.SharedDTO.ToString()); // ← 추가
                 string enumsPath = Path.Combine(rootOutputPath, SourceCategory.Enums.ToString());
                 string resolverPath = Path.Combine(rootOutputPath, DataForgeConsts.Resolver);
+
                 string sourceFolderPath = Path.Combine(rootOutputPath, "_TempMpcProject");
                 string dllsDirectory = Path.Combine(rootOutputPath, "Dlls");
                 string outputDllPath = Path.Combine(dllsDirectory, Settings.Default.OutputDllName + ".dll");
@@ -55,23 +63,22 @@ namespace Elder.DataForge.Core.DllBuilder
 
                 UpdateProgressValue(20f);
 
-                // ✨ 1. 로컬 Libs 절대 경로 및 필수 DLL 목록 정의
+                // 1. 참조 DLL 목록 구성
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string libsDir = Path.Combine(baseDir, "Libs");
 
-                // 빌드에 필요한 모든 외부 라이브러리 목록
-                string[] requiredDlls = {
+                string[] requiredDlls =
+                {
                     "Unity.Entities.dll",
                     "Unity.Collections.dll",
                     "Unity.Mathematics.dll",
                     "MessagePack.dll",
-                    "UniTask.dll", // Cysharp.Threading.Tasks 용
-                    "Elder.Framework.Data.Interfaces.dll" // IGameDataLoader 등 프레임워크 인터페이스 용
+                    "UniTask.dll",
+                    "Elder.Framework.Data.Interfaces.dll"
                 };
 
                 StringBuilder refBuilder = new StringBuilder();
                 refBuilder.AppendLine("  <ItemGroup>");
-
                 foreach (var dllName in requiredDlls)
                 {
                     string fullPath = Path.Combine(libsDir, dllName);
@@ -80,7 +87,6 @@ namespace Elder.DataForge.Core.DllBuilder
                         LogMessage($"[Warning] 필수 참조 누락: {dllName} 파일이 Libs 폴더에 없습니다. ({fullPath})");
                         continue;
                     }
-
                     string assemblyName = Path.GetFileNameWithoutExtension(dllName);
                     refBuilder.AppendLine($@"    <Reference Include=""{assemblyName}""><HintPath>{fullPath}</HintPath></Reference>");
                 }
@@ -88,15 +94,23 @@ namespace Elder.DataForge.Core.DllBuilder
 
                 UpdateProgressValue(30f);
 
-                // 2. .csproj 생성
-                string enumsCompile = Directory.Exists(enumsPath)
-                    ? $"\n    <Compile Include=\"{enumsPath}\\**\\*.cs\" />"
-                    : string.Empty;
+                // 2. .csproj 컴파일 대상 구성
+                // 폴더가 존재하는 경우에만 Compile 항목에 추가
+                var compileBuilder = new StringBuilder();
 
-                string compileItems = $@"
-    <Compile Include=""{gameDataPath}\**\*.cs"" />{enumsCompile}
-    <Compile Include=""{resolverPath}\**\*.cs"" />
-";
+                if (Directory.Exists(gameDataPath))
+                    compileBuilder.AppendLine($@"    <Compile Include=""{gameDataPath}\**\*.cs"" />");
+
+                if (Directory.Exists(sharedDtoPath))  // ← 추가
+                    compileBuilder.AppendLine($@"    <Compile Include=""{sharedDtoPath}\**\*.cs"" />");
+
+                if (Directory.Exists(enumsPath))
+                    compileBuilder.AppendLine($@"    <Compile Include=""{enumsPath}\**\*.cs"" />");
+
+                if (Directory.Exists(resolverPath))
+                    compileBuilder.AppendLine($@"    <Compile Include=""{resolverPath}\**\*.cs"" />");
+
+                string compileItems = compileBuilder.ToString();
 
                 string assemblyNameResult = Path.GetFileNameWithoutExtension(outputDllPath);
                 string csprojContent = string.Format(MessagePackConsts.DodProjectTemplate, assemblyNameResult, compileItems, refBuilder.ToString());

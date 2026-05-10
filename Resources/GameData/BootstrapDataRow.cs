@@ -3,11 +3,10 @@ using Unity.Entities;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	public struct BlobSceneInfoGameData
+	public struct BootstrapDataRow
 	{
 		public BlobString Key;
-		public BlobString SceneKey;
+		public BlobString DataKey;
 		public int Id;
-		public SceneLoadType LoadMode;
 	}
 }

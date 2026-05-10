@@ -28,8 +28,8 @@
 
 
   <ItemGroup>
-    
-    <Compile Include="D:\Programming\DataForge\Resources\GameData\**\*.cs" />
+        <Compile Include="D:\Programming\DataForge\Resources\GameData\**\*.cs" />
+    <Compile Include="D:\Programming\DataForge\Resources\SharedDTO\**\*.cs" />
     <Compile Include="D:\Programming\DataForge\Resources\Enums\**\*.cs" />
     <Compile Include="D:\Programming\DataForge\Resources\Resolvers\**\*.cs" />
 

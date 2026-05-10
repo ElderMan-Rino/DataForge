@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"interface IInitializable\")",
+      "Bash(xargs grep -l \"IInitializable\")",
+      "Bash(del \"D:\\\\Programming\\\\SkillTrial01_Unity\\\\Assets\\\\Scripts\\\\Framework\\\\Localize\\\\Definitions\\\\Enums\\\\LocalizeCategory.cs\")",
+      "Bash(rmdir \"D:\\\\Programming\\\\SkillTrial01_Unity\\\\Assets\\\\Scripts\\\\Framework\\\\Localize\\\\Definitions\")",
+      "Bash(cd /d \"D:\\\\Programming\\\\DataForge\\\\DataForge\")",
+      "Bash(findstr /r /s \"CreateElement\\\\|Root\\\\>\" \"Core\\\\CodeGenerator\")",
+      "Bash(powershell -Command \"Select-String -Path 'Core\\\\CodeGenerator\\\\*.cs' -Pattern 'CreateElement|Root' -NoEmphasis | Select-Object -First 30\")",
+      "Bash(dotnet build *)"
+    ]
+  }
+}

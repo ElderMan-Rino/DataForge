@@ -1,5 +1,5 @@
 ﻿using Unity.Entities;
-namespace 
+namespace Elder.SkillTrial.Resources.Data
 {
 	public struct ErrorCodeRoot
 	{

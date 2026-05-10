@@ -12,29 +12,31 @@ using Unity.Entities.Serialization;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	public static class ErrorCodeBaker
+	public static class AudioSettingsBaker
 	{
 		public static void Bake(string sourcePath, string savePath, byte[] encryptionKeyPartB)
 		{
 			var rawBytes = File.ReadAllBytes(sourcePath);
 			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 			var rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);
-			var dtoList = rawList.Select(row => new ErrorCode(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (ErrorCategory)System.Convert.ToInt32(row[3]), (ErrorActionType)System.Convert.ToInt32(row[4]))).ToList();
+			var dtoList = rawList.Select(row => new AudioSettings(System.Convert.ToInt32(row[0]), System.Convert.ToSingle(row[1]), System.Convert.ToSingle(row[2]), System.Convert.ToSingle(row[3]), System.Convert.ToSingle(row[4]), System.Convert.ToSingle(row[5]), System.Convert.ToBoolean(row[6]))).ToList();
 
 			var builder = new BlobBuilder(Allocator.Temp);
-			ref ErrorCodeRoot root = ref builder.ConstructRoot<ErrorCodeRoot>();
+			ref AudioSettingsRoot root = ref builder.ConstructRoot<AudioSettingsRoot>();
 			var arrayBuilder = builder.Allocate(ref root.Rows, dtoList.Count);
 
 			for (int i = 0; i < dtoList.Count; i++)
 			{
-				builder.AllocateString(ref arrayBuilder[i].Key, dtoList[i].Key);
-				builder.AllocateString(ref arrayBuilder[i].LocaleKey, dtoList[i].LocaleKey);
 				arrayBuilder[i].Id = dtoList[i].Id;
-				arrayBuilder[i].Category = dtoList[i].Category;
-				arrayBuilder[i].Action = dtoList[i].Action;
+				arrayBuilder[i].MasterVolume = dtoList[i].MasterVolume;
+				arrayBuilder[i].BgmVolume = dtoList[i].BgmVolume;
+				arrayBuilder[i].SfxVolume = dtoList[i].SfxVolume;
+				arrayBuilder[i].VoiceVolume = dtoList[i].VoiceVolume;
+				arrayBuilder[i].UiVolume = dtoList[i].UiVolume;
+				arrayBuilder[i].MuteOnBackground = dtoList[i].MuteOnBackground;
 			}
 
-			var blobRef = builder.CreateBlobAssetReference<ErrorCodeRoot>(Allocator.Temp);
+			var blobRef = builder.CreateBlobAssetReference<AudioSettingsRoot>(Allocator.Temp);
 			builder.Dispose();
 
 			var writer = new MemoryBinaryWriter();

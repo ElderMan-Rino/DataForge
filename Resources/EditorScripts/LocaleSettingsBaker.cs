@@ -12,29 +12,27 @@ using Unity.Entities.Serialization;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	public static class ErrorCodeBaker
+	public static class LocaleSettingsBaker
 	{
 		public static void Bake(string sourcePath, string savePath, byte[] encryptionKeyPartB)
 		{
 			var rawBytes = File.ReadAllBytes(sourcePath);
 			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 			var rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);
-			var dtoList = rawList.Select(row => new ErrorCode(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (ErrorCategory)System.Convert.ToInt32(row[3]), (ErrorActionType)System.Convert.ToInt32(row[4]))).ToList();
+			var dtoList = rawList.Select(row => new LocaleSettings(((System.Collections.IEnumerable)row[0]).Cast<object>().Select(x => (LanguageType)System.Convert.ToInt32(x)).ToList(), System.Convert.ToInt32(row[1]))).ToList();
 
 			var builder = new BlobBuilder(Allocator.Temp);
-			ref ErrorCodeRoot root = ref builder.ConstructRoot<ErrorCodeRoot>();
+			ref LocaleSettingsRoot root = ref builder.ConstructRoot<LocaleSettingsRoot>();
 			var arrayBuilder = builder.Allocate(ref root.Rows, dtoList.Count);
 
 			for (int i = 0; i < dtoList.Count; i++)
 			{
-				builder.AllocateString(ref arrayBuilder[i].Key, dtoList[i].Key);
-				builder.AllocateString(ref arrayBuilder[i].LocaleKey, dtoList[i].LocaleKey);
+				var SupportedLanguagesBuilder = builder.Allocate(ref arrayBuilder[i].SupportedLanguages, dtoList[i].SupportedLanguages.Count);
+				for (int j = 0; j < dtoList[i].SupportedLanguages.Count; j++) SupportedLanguagesBuilder[j] = dtoList[i].SupportedLanguages[j];
 				arrayBuilder[i].Id = dtoList[i].Id;
-				arrayBuilder[i].Category = dtoList[i].Category;
-				arrayBuilder[i].Action = dtoList[i].Action;
 			}
 
-			var blobRef = builder.CreateBlobAssetReference<ErrorCodeRoot>(Allocator.Temp);
+			var blobRef = builder.CreateBlobAssetReference<LocaleSettingsRoot>(Allocator.Temp);
 			builder.Dispose();
 
 			var writer = new MemoryBinaryWriter();

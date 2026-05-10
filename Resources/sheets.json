@@ -2,34 +2,74 @@
   "sheets": [
     {
       "tableName": "SceneInfo",
+      "dataName": "",
+      "isLanguageSheet": false,
       "isActive": true
     },
     {
       "tableName": "BootstrapLocale_Ko",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
       "isActive": true
     },
     {
       "tableName": "BootstrapLocale_Jp",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
       "isActive": true
     },
     {
       "tableName": "BootstrapLocale_En",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
       "isActive": true
     },
     {
       "tableName": "ErrorCode",
+      "dataName": "",
+      "isLanguageSheet": false,
       "isActive": true
     },
     {
       "tableName": "ErrorMsgLocale_Ko",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
       "isActive": true
     },
     {
       "tableName": "ErrorMsgLocale_Jp",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
       "isActive": true
     },
     {
       "tableName": "ErrorMsgLocale_En",
+      "dataName": "LocaleEntry",
+      "isLanguageSheet": true,
+      "isActive": true
+    },
+    {
+      "tableName": "BootstrapData",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "AudioSettings",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "GraphicsSettings",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "LocaleSettings",
+      "dataName": "",
+      "isLanguageSheet": false,
       "isActive": true
     }
   ]

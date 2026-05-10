@@ -10,7 +10,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
 
-namespace 
+namespace Elder.SkillTrial.Resources.Data
 {
 	public static class SceneInfoBaker
 	{

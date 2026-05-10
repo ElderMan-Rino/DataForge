@@ -1,6 +1,8 @@
 ﻿using Elder.DataForge.Core.Common.Const;
 using Elder.DataForge.Core.Common.Const.MessagePack;
+using Elder.DataForge.Core.Commons.Enum;
 using Elder.DataForge.Core.Interfaces;
+using Elder.DataForge.Properties;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -128,26 +130,31 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
             try
             {
                 string projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+
                 var restoreInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
                     Arguments = "tool restore",
-                    WorkingDirectory = projectRoot, // .config 폴더가 있는 위치
+                    WorkingDirectory = projectRoot,
                     CreateNoWindow = true,
                     UseShellExecute = false
                 };
-
                 using (var restoreProcess = Process.Start(restoreInfo))
-                {
                     await restoreProcess?.WaitForExitAsync();
-                }
 
-                string inputPath = Path.Combine(Properties.Settings.Default.OutputPath, MessagePackConsts.DODSuffix);
-                string resolverFolderPath = Path.Combine(Properties.Settings.Default.OutputPath, DataForgeConsts.Resolver);
-                string outputPath = Path.Combine(resolverFolderPath, MessagePackConsts.ResolverFileName);
+                string outputPath = Properties.Settings.Default.OutputPath;
+                string gameDataPath = Path.Combine(outputPath, SourceCategory.GameData.ToString());
+                string resolverFolderPath = Path.Combine(outputPath, DataForgeConsts.Resolver);
+                string resolverOutputPath = Path.Combine(resolverFolderPath, MessagePackConsts.ResolverFileName);
                 string nameSpace = Properties.Settings.Default.RootNamespace;
 
-                // 1. MSBuild 실제 경로 탐색
+                // ─── GameData 폴더가 없으면 생성 (MPC -i 필수 옵션 충족) ──────
+                if (!Directory.Exists(gameDataPath))
+                    Directory.CreateDirectory(gameDataPath);
+
+                if (!Directory.Exists(resolverFolderPath))
+                    Directory.CreateDirectory(resolverFolderPath);
+
                 string msBuildPath = FindMsBuildPath();
                 if (string.IsNullOrEmpty(msBuildPath))
                 {
@@ -155,10 +162,15 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                     return false;
                 }
 
+                string msBuildBinDir = Path.GetDirectoryName(msBuildPath);
+                string vsRoot = Path.GetFullPath(Path.Combine(msBuildBinDir, @"..\..\..\..\"));
+                string sdksPath = Path.Combine(vsRoot, @"MSBuild\Sdks");
+
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments = $"tool run mpc -i \"{inputPath}\" -p \"{csprojPath}\" -o \"{outputPath}\" -n \"{nameSpace}\"",
+                    // -i GameData(필수), -p csproj(GameData+SharedDTO 분석), -o 출력, -n 네임스페이스
+                    Arguments = $"tool run mpc -i \"{gameDataPath}\" -p \"{csprojPath}\" -o \"{resolverOutputPath}\" -n \"{nameSpace}\"",
                     WorkingDirectory = projectRoot,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -168,33 +180,29 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                     CreateNoWindow = true
                 };
 
-                // 2. 환경 변수 강제 주입 (D드라이브 설치 시 필수)
-                string msBuildBinDir = Path.GetDirectoryName(msBuildPath);
-                string vsRoot = Path.GetFullPath(Path.Combine(msBuildBinDir, @"..\..\..\..\")); // MSBuild\Current\Bin -> MSBuild 기준
-                string sdksPath = Path.Combine(vsRoot, @"MSBuild\Sdks");
-
                 startInfo.EnvironmentVariables["MSBUILD_EXE_PATH"] = msBuildPath;
-                startInfo.EnvironmentVariables["MSBuildSDKsPath"] = sdksPath; // 이게 없으면 D드라이브에서 SDK 참조를 못합니다.
+                startInfo.EnvironmentVariables["MSBuildSDKsPath"] = sdksPath;
 
-                // .NET 9 환경 변수 보정
                 string dotnetDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule?.FileName);
                 if (!string.IsNullOrEmpty(dotnetDir))
-                {
                     startInfo.EnvironmentVariables["DOTNET_ROOT"] = dotnetDir;
-                }
 
                 using (var process = Process.Start(startInfo))
                 {
                     if (process == null) return false;
 
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
+                    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                    Task<string> errorTask = process.StandardError.ReadToEndAsync();
 
+                    await process.WaitForExitAsync();
+
+                    string stdOutput = await outputTask;
+                    string stdError = await errorTask;
+                    
                     if (process.ExitCode != 0)
                     {
-                        UpdateOutputLog($"MPC Fail Output: {output}");
-                        UpdateOutputLog($"MPC Fail Error: {error}");
+                        UpdateOutputLog($"MPC Fail Output: {stdOutput}");
+                        UpdateOutputLog($"MPC Fail Error: {stdError}");
                         return false;
                     }
                     return true;
@@ -242,32 +250,41 @@ namespace Elder.DataForge.Core.PostProcessor.MessagePack
                 if (!Directory.Exists(targetPath))
                     Directory.CreateDirectory(targetPath);
 
-                // 1. 유니티 DLL 절대 경로 계산 (Libs 폴더 기준)
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string libsDir = Path.Combine(baseDir, "Libs");
                 string entitiesDllPath = Path.Combine(libsDir, "Unity.Entities.dll");
                 string collectionsDllPath = Path.Combine(libsDir, "Unity.Collections.dll");
 
-                // 2. 참조(Reference) 태그 생성
                 StringBuilder refBuilder = new StringBuilder();
                 refBuilder.AppendLine("  <ItemGroup>");
                 refBuilder.AppendLine($@"    <Reference Include=""Unity.Entities""><HintPath>{entitiesDllPath}</HintPath></Reference>");
                 refBuilder.AppendLine($@"    <Reference Include=""Unity.Collections""><HintPath>{collectionsDllPath}</HintPath></Reference>");
                 refBuilder.AppendLine("  </ItemGroup>");
 
-                // 3. 템플릿에 주입 ( {0}: 이름, {1}: 추가태그, {2}: DLL참조 )
-                string content = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, additionalTags, refBuilder.ToString());
+                // ─── MPC 분석 대상: GameData + SharedDTO ──────────────────────
+                string outputPath = Settings.Default.OutputPath;
+                string gameDataPath = Path.Combine(outputPath, SourceCategory.GameData.ToString());
+                string sharedDtoPath = Path.Combine(outputPath, SourceCategory.SharedDTO.ToString());
+
+                var compileBuilder = new StringBuilder();
+                if (Directory.Exists(gameDataPath))
+                    compileBuilder.AppendLine($@"    <Compile Include=""{gameDataPath}\**\*.cs"" />");
+                if (Directory.Exists(sharedDtoPath))
+                    compileBuilder.AppendLine($@"    <Compile Include=""{sharedDtoPath}\**\*.cs"" />");
+
+                // additionalTags와 합산
+                string fullAdditionalTags = compileBuilder.ToString() + additionalTags;
+
+                string content = string.Format(MessagePackConsts.DodProjectTemplate, assemblyName, fullAdditionalTags, refBuilder.ToString());
                 string filePath = Path.Combine(targetPath, $"{assemblyName}.csproj");
 
-                // UTF8 with BOM은 가끔 외부 툴에서 문제를 일으키므로, 인코딩 선택에 유의하세요.
                 await File.WriteAllTextAsync(filePath, content, new UTF8Encoding(false));
-
-                return filePath; // 경로를 반환하여 다음 프로세스(RunMPC)에서 바로 쓰게 함
+                return filePath;
             }
             catch (Exception ex)
             {
                 UpdateOutputLog($"[CsprojGen] Error: {ex.Message}");
-                throw; // 상위 ProcessAsync에서 에러 처리를 하도록 던짐
+                throw;
             }
         }
     }
