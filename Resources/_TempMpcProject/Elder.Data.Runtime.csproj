@@ -22,6 +22,7 @@
     <Reference Include="Unity.Entities"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Entities.dll</HintPath></Reference>
     <Reference Include="Unity.Collections"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Collections.dll</HintPath></Reference>
     <Reference Include="Unity.Mathematics"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Mathematics.dll</HintPath></Reference>
+    <Reference Include="Unity.Burst"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\Unity.Burst.dll</HintPath></Reference>
     <Reference Include="MessagePack"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\MessagePack.dll</HintPath></Reference>
     <Reference Include="UniTask"><HintPath>D:\Programming\DataForge\bin\Debug\net9.0-windows\Libs\UniTask.dll</HintPath></Reference>
   </ItemGroup>

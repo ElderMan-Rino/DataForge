@@ -7,6 +7,7 @@ namespace Elder.DataForge.Core.Interfaces
     {
         public Task<List<GeneratedSourceCode>> GenerateAsync(List<TableSchema> schemas);
         public string GenerateDataLoaderContent(List<SheetEntry> activeSheets);
+        public string GenerateBlobRegistryContent(List<SheetEntry> activeSheets);
         public string GenerateSheetKeyContent(List<SheetEntry> activeSheets);
         public List<GeneratedSourceCode> GenerateEnums(List<EnumSchema> enumSchemas);
     }

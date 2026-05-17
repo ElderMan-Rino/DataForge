@@ -8,7 +8,12 @@
       "Bash(cd /d \"D:\\\\Programming\\\\DataForge\\\\DataForge\")",
       "Bash(findstr /r /s \"CreateElement\\\\|Root\\\\>\" \"Core\\\\CodeGenerator\")",
       "Bash(powershell -Command \"Select-String -Path 'Core\\\\CodeGenerator\\\\*.cs' -Pattern 'CreateElement|Root' -NoEmphasis | Select-Object -First 30\")",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(xargs grep -l \"GeneratedBlobLoader\")",
+      "Bash(xargs grep -l \"ICodeEmitter\\\\|ISourceCodeGenerator\\\\|SheetEntry\")",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(xargs grep -l \"Resolver\\\\|resolver\")",
+      "Bash(xargs grep -l \"GeneratedBlobLoader\\\\|SheetKey\\\\|_registry\")"
     ]
   }
 }

@@ -72,6 +72,7 @@ namespace Elder.DataForge.Core.DllBuilder
                     "Unity.Entities.dll",
                     "Unity.Collections.dll",
                     "Unity.Mathematics.dll",
+                    "Unity.Burst.dll",
                     "MessagePack.dll",
                     "UniTask.dll",
                     "Elder.Framework.Data.Interfaces.dll"

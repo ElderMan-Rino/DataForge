@@ -120,8 +120,9 @@ namespace Elder.DataForge.Core.CodeGenerator
         {
             return new List<GeneratedSourceCode>
             {
-                new("SheetKey.cs",            _codeEmitter.GenerateSheetKeyContent(activeSheets),    SourceCategory.BlobLoader),
-                new("GeneratedBlobLoader.cs", _codeEmitter.GenerateDataLoaderContent(activeSheets),  SourceCategory.BlobLoader),
+                new("SheetKey.cs",              _codeEmitter.GenerateSheetKeyContent(activeSheets),      SourceCategory.BlobLoader),
+                new("GeneratedBlobRegistry.cs", _codeEmitter.GenerateBlobRegistryContent(activeSheets),  SourceCategory.BlobLoader),
+                new("GeneratedBlobLoader.cs",   _codeEmitter.GenerateDataLoaderContent(activeSheets),    SourceCategory.BlobLoader),
             };
         }
 

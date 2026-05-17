@@ -251,10 +251,30 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
         {
             _targetDataNamespace = Settings.Default.RootNamespace;
 
-            var entries = activeSheets
-                .Where(s => !s.IsLanguageSheet)
-                .Select(s => ($"{s.TableName}Root", s.TableName))
-                .ToList();
+            var sb = new StringBuilder();
+            WriteLine(sb, "using Cysharp.Threading.Tasks;");
+            WriteLine(sb, "using Elder.Framework.Data.Interfaces;");
+            WriteLine(sb, "using System.Collections.Generic;");
+            WriteLine(sb, "");
+            WriteLine(sb, $"namespace {_targetDataNamespace}");
+            WriteLine(sb, "{");
+            WriteLine(sb, "\tpublic sealed class GeneratedBlobLoader : IGameDataLoader");
+            WriteLine(sb, "\t{");
+            WriteLine(sb, "\t\tpublic UniTask LoadAsync(IDataSheetLoader sheetLoader, string key)");
+            WriteLine(sb, "\t\t\t=> GeneratedBlobRegistry.Registry.TryGetValue(key, out var load)");
+            WriteLine(sb, "\t\t\t\t? load(sheetLoader)");
+            WriteLine(sb, "\t\t\t\t: throw new KeyNotFoundException(key);");
+            WriteLine(sb, "\t}");
+            WriteLine(sb, "}");
+            return sb.ToString();
+        }
+
+        public string GenerateBlobRegistryContent(List<SheetEntry> activeSheets)
+        {
+            _targetDataNamespace = Settings.Default.RootNamespace;
+
+            var normalSheets   = activeSheets.Where(s => !s.IsLanguageSheet).ToList();
+            var languageSheets = activeSheets.Where(s =>  s.IsLanguageSheet).ToList();
 
             var sb = new StringBuilder();
             WriteLine(sb, "using Cysharp.Threading.Tasks;");
@@ -264,21 +284,15 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "");
             WriteLine(sb, $"namespace {_targetDataNamespace}");
             WriteLine(sb, "{");
-            WriteLine(sb, "\tpublic sealed class GeneratedBlobLoader : IGameDataLoader");
+            WriteLine(sb, "\tpublic static class GeneratedBlobRegistry");
             WriteLine(sb, "\t{");
-            WriteLine(sb, "\t\tprivate static readonly Dictionary<string, Func<IDataSheetLoader, UniTask>> _registry = new()");
+            WriteLine(sb, "\t\tpublic static readonly Dictionary<string, Func<IDataSheetLoader, UniTask>> Registry = new()");
             WriteLine(sb, "\t\t{");
-            foreach (var (rootTypeName, addressableKey) in entries)
-                WriteLine(sb, $"\t\t\t[SheetKey.{addressableKey}] = l => l.LoadSheetAsync<{rootTypeName}>(SheetKey.{addressableKey}),");
+            foreach (var sheet in normalSheets)
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}] = static l => l.LoadSheetAsync<{sheet.TableName}Root>(SheetKey.{sheet.TableName}),");
+            foreach (var sheet in languageSheets)
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}] = static l => l.LoadSheetAsync<{sheet.DataName}Root>(SheetKey.{sheet.TableName}),");
             WriteLine(sb, "\t\t};");
-            WriteLine(sb, "");
-            WriteLine(sb, "\t\tpublic UniTask LoadAsync<T>(IDataSheetLoader sheetLoader, string key) where T : unmanaged");
-            WriteLine(sb, "\t\t\t=> sheetLoader.LoadSheetAsync<T>(key);");
-            WriteLine(sb, "");
-            WriteLine(sb, "\t\tpublic UniTask LoadByKeyAsync(IDataSheetLoader sheetLoader, string key)");
-            WriteLine(sb, "\t\t\t=> _registry.TryGetValue(key, out var load)");
-            WriteLine(sb, "\t\t\t\t? load(sheetLoader)");
-            WriteLine(sb, "\t\t\t\t: throw new KeyNotFoundException(key);");
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
             return sb.ToString();
@@ -289,7 +303,6 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             _targetDataNamespace = Settings.Default.RootNamespace;
 
             var keys = activeSheets
-                .Where(s => !s.IsLanguageSheet)
                 .Select(s => s.TableName)
                 .ToList();
 
@@ -338,8 +351,9 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             _targetDataNamespace = Settings.Default.RootNamespace;
 
             var sb = new StringBuilder();
-            WriteLine(sb, "using System;\nusing Unity.Entities;\n");
+            WriteLine(sb, "using System;\nusing Unity.Burst;\nusing Unity.Entities;\n");
             WriteLine(sb, $"namespace {_targetDataNamespace}\n{{");
+            WriteLine(sb, "\t[BurstCompile]");
             WriteLine(sb, $"\tpublic struct {name}\n\t{{");
 
             foreach (var f in fields.OrderByDescending(f => f.TotalSize))
@@ -354,8 +368,10 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             _targetDataNamespace = Settings.Default.RootNamespace;
 
             var sb = new StringBuilder();
+            WriteLine(sb, "using Unity.Burst;");
             WriteLine(sb, "using Unity.Entities;");
             WriteLine(sb, $"namespace {_targetDataNamespace}\n{{");
+            WriteLine(sb, "\t[BurstCompile]");
             WriteLine(sb, $"\tpublic struct {tableName}Root\n\t{{");
             WriteLine(sb, $"\t\tpublic BlobArray<{dodName}> Rows;");
             WriteLine(sb, "\t}\n}");
