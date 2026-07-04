@@ -89,6 +89,18 @@
       "dataName": "AssetInfoEntry",
       "isLanguageSheet": false,
       "isActive": true
+    },
+    {
+      "tableName": "AssetInfoEntryBoot",
+      "dataName": "AssetInfoEntry",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "BgmInfo",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
     }
   ]
 }

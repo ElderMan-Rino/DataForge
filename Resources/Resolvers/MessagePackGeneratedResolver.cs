@@ -47,18 +47,19 @@ namespace Elder.SkillTrial.Resources.Data.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(10)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(11)
             {
                 { typeof(global::System.Collections.Generic.List<LanguageType>), 0 },
                 { typeof(global::Elder.SkillTrial.Resources.Data.AssetInfoEntry), 1 },
                 { typeof(global::Elder.SkillTrial.Resources.Data.AudioSettings), 2 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapData), 3 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey), 4 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.ErrorCode), 5 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.GraphicsSettings), 6 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.LocaleSettings), 7 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.SceneInfo), 8 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.SplashEntryInfo), 9 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.BgmInfo), 3 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapData), 4 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey), 5 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.ErrorCode), 6 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.GraphicsSettings), 7 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.LocaleSettings), 8 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.SceneInfo), 9 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.SplashEntryInfo), 10 },
             };
         }
 
@@ -75,13 +76,14 @@ namespace Elder.SkillTrial.Resources.Data.Resolvers
                 case 0: return new global::MessagePack.Formatters.ListFormatter<LanguageType>();
                 case 1: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.AssetInfoEntryFormatter();
                 case 2: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.AudioSettingsFormatter();
-                case 3: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapDataFormatter();
-                case 4: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapLocaleKeyFormatter();
-                case 5: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.ErrorCodeFormatter();
-                case 6: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.GraphicsSettingsFormatter();
-                case 7: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.LocaleSettingsFormatter();
-                case 8: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SceneInfoFormatter();
-                case 9: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SplashEntryInfoFormatter();
+                case 3: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BgmInfoFormatter();
+                case 4: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapDataFormatter();
+                case 5: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapLocaleKeyFormatter();
+                case 6: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.ErrorCodeFormatter();
+                case 7: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.GraphicsSettingsFormatter();
+                case 8: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.LocaleSettingsFormatter();
+                case 9: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SceneInfoFormatter();
+                case 10: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SplashEntryInfoFormatter();
                 default: return null;
             }
         }
@@ -232,6 +234,57 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
             }
 
             var ____result = new global::Elder.SkillTrial.Resources.Data.AudioSettings(__Id__, __MasterVolume__, __BgmVolume__, __SfxVolume__, __VoiceVolume__, __UiVolume__, __MuteOnBackground__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class BgmInfoFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Elder.SkillTrial.Resources.Data.BgmInfo>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.BgmInfo value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(3);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Key, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.AssetName, options);
+            writer.Write(value.Id);
+        }
+
+        public global::Elder.SkillTrial.Resources.Data.BgmInfo Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __Key__ = default(string);
+            var __AssetName__ = default(string);
+            var __Id__ = default(int);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __Key__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __AssetName__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 2:
+                        __Id__ = reader.ReadInt32();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::Elder.SkillTrial.Resources.Data.BgmInfo(__Key__, __AssetName__, __Id__);
             reader.Depth--;
             return ____result;
         }

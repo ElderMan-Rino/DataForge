@@ -8,23 +8,25 @@ namespace Elder.SkillTrial.Resources.Data
 	public static class GeneratedBlobRegistry
 	{
 		// [HEAP] 초기화 시 1회 할당
-		public static readonly Dictionary<int, Func<IDataSheetLoader, int, UniTask>> Registry = new()
+		public static readonly Dictionary<int, Func<IDataSheetLoader, UniTask>> Registry = new()
 		{
-			[SheetKey.BootstrapLocaleKeyHash] = static (l, scope) => l.LoadSheetAsync<BootstrapLocaleKeyRoot>(SheetKey.BootstrapLocaleKey, scope),
-			[SheetKey.AudioSettingsHash] = static (l, scope) => l.LoadSheetAsync<AudioSettingsRoot>(SheetKey.AudioSettings, scope),
-			[SheetKey.BootstrapDataHash] = static (l, scope) => l.LoadSheetAsync<BootstrapDataRoot>(SheetKey.BootstrapData, scope),
-			[SheetKey.ErrorCodeHash] = static (l, scope) => l.LoadSheetAsync<ErrorCodeRoot>(SheetKey.ErrorCode, scope),
-			[SheetKey.GraphicsSettingsHash] = static (l, scope) => l.LoadSheetAsync<GraphicsSettingsRoot>(SheetKey.GraphicsSettings, scope),
-			[SheetKey.LocaleSettingsHash] = static (l, scope) => l.LoadSheetAsync<LocaleSettingsRoot>(SheetKey.LocaleSettings, scope),
-			[SheetKey.SceneInfoHash] = static (l, scope) => l.LoadSheetAsync<SceneInfoRoot>(SheetKey.SceneInfo, scope),
-			[SheetKey.SplashEntryInfoHash] = static (l, scope) => l.LoadSheetAsync<SplashEntryInfoRoot>(SheetKey.SplashEntryInfo, scope),
-			[SheetKey.BootHash] = static (l, scope) => l.LoadSheetAsync<BootRoot>(SheetKey.Boot, scope),
-			[SheetKey.BootstrapLocale_KoHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Ko, scope),
-			[SheetKey.BootstrapLocale_JpHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Jp, scope),
-			[SheetKey.BootstrapLocale_EnHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_En, scope),
-			[SheetKey.ErrorMsgLocale_KoHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Ko, scope),
-			[SheetKey.ErrorMsgLocale_JpHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Jp, scope),
-			[SheetKey.ErrorMsgLocale_EnHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_En, scope),
+			[SheetKey.BootstrapLocaleKeyHash] = static l => l.LoadSheetAsync<BootstrapLocaleKeyRoot>(SheetKey.BootstrapLocaleKey),
+			[SheetKey.AudioSettingsHash] = static l => l.LoadSheetAsync<AudioSettingsRoot>(SheetKey.AudioSettings),
+			[SheetKey.BootstrapDataHash] = static l => l.LoadSheetAsync<BootstrapDataRoot>(SheetKey.BootstrapData),
+			[SheetKey.ErrorCodeHash] = static l => l.LoadSheetAsync<ErrorCodeRoot>(SheetKey.ErrorCode),
+			[SheetKey.GraphicsSettingsHash] = static l => l.LoadSheetAsync<GraphicsSettingsRoot>(SheetKey.GraphicsSettings),
+			[SheetKey.LocaleSettingsHash] = static l => l.LoadSheetAsync<LocaleSettingsRoot>(SheetKey.LocaleSettings),
+			[SheetKey.SceneInfoHash] = static l => l.LoadSheetAsync<SceneInfoRoot>(SheetKey.SceneInfo),
+			[SheetKey.SplashEntryInfoHash] = static l => l.LoadSheetAsync<SplashEntryInfoRoot>(SheetKey.SplashEntryInfo),
+			[SheetKey.BootHash] = static l => l.LoadSheetAsync<BootRoot>(SheetKey.Boot),
+			[SheetKey.AssetInfoEntryBootHash] = static l => l.LoadSheetAsync<AssetInfoEntryBootRoot>(SheetKey.AssetInfoEntryBoot),
+			[SheetKey.BgmInfoHash] = static l => l.LoadSheetAsync<BgmInfoRoot>(SheetKey.BgmInfo),
+			[SheetKey.BootstrapLocale_KoHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Ko),
+			[SheetKey.BootstrapLocale_JpHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Jp),
+			[SheetKey.BootstrapLocale_EnHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_En),
+			[SheetKey.ErrorMsgLocale_KoHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Ko),
+			[SheetKey.ErrorMsgLocale_JpHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Jp),
+			[SheetKey.ErrorMsgLocale_EnHash] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_En),
 		};
 	}
 }

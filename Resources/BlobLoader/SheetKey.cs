@@ -34,5 +34,9 @@ namespace Elder.SkillTrial.Resources.Data
 		public static readonly int   SplashEntryInfoHash    = StringHashHelper.ToStableHash(SplashEntryInfo);
 		public const string          Boot                   = "Boot";
 		public static readonly int   BootHash               = StringHashHelper.ToStableHash(Boot);
+		public const string          AssetInfoEntryBoot     = "AssetInfoEntryBoot";
+		public static readonly int   AssetInfoEntryBootHash = StringHashHelper.ToStableHash(AssetInfoEntryBoot);
+		public const string          BgmInfo                = "BgmInfo";
+		public static readonly int   BgmInfoHash            = StringHashHelper.ToStableHash(BgmInfo);
 	}
 }
