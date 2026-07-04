@@ -13,7 +13,18 @@
       "Bash(xargs grep -l \"ICodeEmitter\\\\|ISourceCodeGenerator\\\\|SheetEntry\")",
       "Bash(grep -v \"^\\\\s*//\")",
       "Bash(xargs grep -l \"Resolver\\\\|resolver\")",
-      "Bash(xargs grep -l \"GeneratedBlobLoader\\\\|SheetKey\\\\|_registry\")"
+      "Bash(xargs grep -l \"GeneratedBlobLoader\\\\|SheetKey\\\\|_registry\")",
+      "Bash(cd /d D:\\\\Programming\\\\DataForge)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.cs\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "PowerShell(head *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Programming\\\\DataForge\\\\DataForge\" -Recurse -Depth 2 | Select-Object FullName | ForEach-Object { $_.FullName } | Select-Object -First 150)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Programming\\\\DataForge\\\\Resources\" -Recurse -Depth 2 | Select-Object FullName | ForEach-Object { $_.FullName } | Select-Object -First 80)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Programming\\\\DataForge\\\\DataForge\\\\Core\" -Directory | ForEach-Object { Write-Host \"- $\\($_.Name\\)\" })",
+      "PowerShell(Get-ChildItem \"D:\\\\Programming\\\\DataForge\\\\DataForge\\\\Core\" -Recurse | Select-Object FullName, PSIsContainer | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName)"
     ]
   }
 }

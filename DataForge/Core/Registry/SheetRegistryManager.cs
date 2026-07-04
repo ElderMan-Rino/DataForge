@@ -39,8 +39,6 @@ namespace Elder.DataForge.Core.Registry
         {
             var schemaMap = schemas.ToDictionary(s => s.TableName, s => s);
 
-            existing.Sheets.RemoveAll(s => !schemaMap.ContainsKey(s.TableName));
-
             foreach (var (tableName, schema) in schemaMap)
             {
                 var entry = existing.Sheets.FirstOrDefault(s => s.TableName == tableName);

@@ -6,9 +6,11 @@ namespace Elder.SkillTrial.Resources.Data
 {
 	public sealed class GeneratedBlobLoader : IGameDataLoader
 	{
-		public UniTask LoadAsync(IDataSheetLoader sheetLoader, string key)
-			=> GeneratedBlobRegistry.Registry.TryGetValue(key, out var load)
-				? load(sheetLoader)
-				: throw new KeyNotFoundException(key);
+		public UniTask LoadAsync(IDataSheetLoader sheetLoader, int hash, int scope)
+		{
+			return GeneratedBlobRegistry.Registry.TryGetValue(hash, out var load)
+				? load(sheetLoader, scope)
+				: throw new KeyNotFoundException(hash.ToString()); // [HEAP] error path only
+		}
 	}
 }

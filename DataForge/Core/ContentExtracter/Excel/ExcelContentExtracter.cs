@@ -1,4 +1,5 @@
-﻿using Elder.DataForge.Core.Interfaces;
+﻿using System.Linq;
+using Elder.DataForge.Core.Interfaces;
 using Elder.DataForge.Models.Data;
 using Elder.DataForge.Models.Data.Excel;
 using Elder.Helpers.Commons;
@@ -109,7 +110,7 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
 
                         for (int col = 1; col <= colCount; col++)
                         {
-                            string cellText = worksheet.Cells[row, col].Text;
+                            string cellText = worksheet.Cells[row, col].Text?.Trim() ?? string.Empty;
 
                             // ─── <Language> 태그 수집 ──────────────────────
                             // 아직 못 찾은 경우에만 시도
@@ -303,7 +304,7 @@ namespace Elder.DataForge.Core.ContentExtracter.Excel
             if (segments == null || segments.Length <= 0 || segments.Length > 2)
                 return false;
 
-            variableInfo = segments;
+            variableInfo = segments.Select(s => s.Trim()).ToArray();
             return true;
         }
 

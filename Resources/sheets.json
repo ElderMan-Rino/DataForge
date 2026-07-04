@@ -1,7 +1,19 @@
 {
   "sheets": [
     {
-      "tableName": "SceneInfo",
+      "tableName": "BootstrapLocaleKey",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "AudioSettings",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "BootstrapData",
       "dataName": "",
       "isLanguageSheet": false,
       "isActive": true
@@ -49,18 +61,6 @@
       "isActive": true
     },
     {
-      "tableName": "BootstrapData",
-      "dataName": "",
-      "isLanguageSheet": false,
-      "isActive": true
-    },
-    {
-      "tableName": "AudioSettings",
-      "dataName": "",
-      "isLanguageSheet": false,
-      "isActive": true
-    },
-    {
       "tableName": "GraphicsSettings",
       "dataName": "",
       "isLanguageSheet": false,
@@ -69,6 +69,24 @@
     {
       "tableName": "LocaleSettings",
       "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "SceneInfo",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "SplashEntryInfo",
+      "dataName": "",
+      "isLanguageSheet": false,
+      "isActive": true
+    },
+    {
+      "tableName": "Boot",
+      "dataName": "AssetInfoEntry",
       "isLanguageSheet": false,
       "isActive": true
     }

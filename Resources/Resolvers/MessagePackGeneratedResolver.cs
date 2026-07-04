@@ -47,15 +47,18 @@ namespace Elder.SkillTrial.Resources.Data.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(7)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(10)
             {
                 { typeof(global::System.Collections.Generic.List<LanguageType>), 0 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.AudioSettings), 1 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapData), 2 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.ErrorCode), 3 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.GraphicsSettings), 4 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.LocaleSettings), 5 },
-                { typeof(global::Elder.SkillTrial.Resources.Data.SceneInfo), 6 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.AssetInfoEntry), 1 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.AudioSettings), 2 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapData), 3 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey), 4 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.ErrorCode), 5 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.GraphicsSettings), 6 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.LocaleSettings), 7 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.SceneInfo), 8 },
+                { typeof(global::Elder.SkillTrial.Resources.Data.SplashEntryInfo), 9 },
             };
         }
 
@@ -70,12 +73,15 @@ namespace Elder.SkillTrial.Resources.Data.Resolvers
             switch (key)
             {
                 case 0: return new global::MessagePack.Formatters.ListFormatter<LanguageType>();
-                case 1: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.AudioSettingsFormatter();
-                case 2: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapDataFormatter();
-                case 3: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.ErrorCodeFormatter();
-                case 4: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.GraphicsSettingsFormatter();
-                case 5: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.LocaleSettingsFormatter();
-                case 6: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SceneInfoFormatter();
+                case 1: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.AssetInfoEntryFormatter();
+                case 2: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.AudioSettingsFormatter();
+                case 3: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapDataFormatter();
+                case 4: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.BootstrapLocaleKeyFormatter();
+                case 5: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.ErrorCodeFormatter();
+                case 6: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.GraphicsSettingsFormatter();
+                case 7: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.LocaleSettingsFormatter();
+                case 8: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SceneInfoFormatter();
+                case 9: return new Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data.SplashEntryInfoFormatter();
                 default: return null;
             }
         }
@@ -111,6 +117,57 @@ namespace Elder.SkillTrial.Resources.Data.Resolvers
 
 namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.Data
 {
+    public sealed class AssetInfoEntryFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Elder.SkillTrial.Resources.Data.AssetInfoEntry>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.AssetInfoEntry value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(3);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Label, options);
+            writer.Write(value.Id);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<AssetType>(formatterResolver).Serialize(ref writer, value.AssetType, options);
+        }
+
+        public global::Elder.SkillTrial.Resources.Data.AssetInfoEntry Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __Label__ = default(string);
+            var __Id__ = default(int);
+            var __AssetType__ = default(AssetType);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __Label__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Id__ = reader.ReadInt32();
+                        break;
+                    case 2:
+                        __AssetType__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<AssetType>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::Elder.SkillTrial.Resources.Data.AssetInfoEntry(__Label__, __Id__, __AssetType__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class AudioSettingsFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Elder.SkillTrial.Resources.Data.AudioSettings>
     {
 
@@ -226,6 +283,57 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
             }
 
             var ____result = new global::Elder.SkillTrial.Resources.Data.BootstrapData(__Key__, __DataKey__, __Id__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class BootstrapLocaleKeyFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(3);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.SheetName, options);
+            writer.Write(value.Id);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<LanguageType>(formatterResolver).Serialize(ref writer, value.LocaleType, options);
+        }
+
+        public global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __SheetName__ = default(string);
+            var __Id__ = default(int);
+            var __LocaleType__ = default(LanguageType);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __SheetName__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Id__ = reader.ReadInt32();
+                        break;
+                    case 2:
+                        __LocaleType__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<LanguageType>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::Elder.SkillTrial.Resources.Data.BootstrapLocaleKey(__SheetName__, __Id__, __LocaleType__);
             reader.Depth--;
             return ____result;
         }
@@ -450,6 +558,57 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
             }
 
             var ____result = new global::Elder.SkillTrial.Resources.Data.SceneInfo(__Key__, __SceneKey__, __Id__, __LoadMode__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class SplashEntryInfoFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Elder.SkillTrial.Resources.Data.SplashEntryInfo>
+    {
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.SplashEntryInfo value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            writer.WriteArrayHeader(3);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.SpriteName, options);
+            writer.Write(value.Id);
+            writer.Write(value.Interval);
+        }
+
+        public global::Elder.SkillTrial.Resources.Data.SplashEntryInfo Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                throw new global::System.InvalidOperationException("typecode is null, struct not supported");
+            }
+
+            options.Security.DepthStep(ref reader);
+            global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
+            var length = reader.ReadArrayHeader();
+            var __SpriteName__ = default(string);
+            var __Id__ = default(int);
+            var __Interval__ = default(float);
+
+            for (int i = 0; i < length; i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        __SpriteName__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 1:
+                        __Id__ = reader.ReadInt32();
+                        break;
+                    case 2:
+                        __Interval__ = reader.ReadSingle();
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            var ____result = new global::Elder.SkillTrial.Resources.Data.SplashEntryInfo(__SpriteName__, __Id__, __Interval__);
             reader.Depth--;
             return ____result;
         }

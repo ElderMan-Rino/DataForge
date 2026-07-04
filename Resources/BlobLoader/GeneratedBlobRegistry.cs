@@ -7,20 +7,24 @@ namespace Elder.SkillTrial.Resources.Data
 {
 	public static class GeneratedBlobRegistry
 	{
-		public static readonly Dictionary<string, Func<IDataSheetLoader, UniTask>> Registry = new()
+		// [HEAP] 초기화 시 1회 할당
+		public static readonly Dictionary<int, Func<IDataSheetLoader, int, UniTask>> Registry = new()
 		{
-			[SheetKey.SceneInfo] = static l => l.LoadSheetAsync<SceneInfoRoot>(SheetKey.SceneInfo),
-			[SheetKey.ErrorCode] = static l => l.LoadSheetAsync<ErrorCodeRoot>(SheetKey.ErrorCode),
-			[SheetKey.BootstrapData] = static l => l.LoadSheetAsync<BootstrapDataRoot>(SheetKey.BootstrapData),
-			[SheetKey.AudioSettings] = static l => l.LoadSheetAsync<AudioSettingsRoot>(SheetKey.AudioSettings),
-			[SheetKey.GraphicsSettings] = static l => l.LoadSheetAsync<GraphicsSettingsRoot>(SheetKey.GraphicsSettings),
-			[SheetKey.LocaleSettings] = static l => l.LoadSheetAsync<LocaleSettingsRoot>(SheetKey.LocaleSettings),
-			[SheetKey.BootstrapLocale_Ko] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Ko),
-			[SheetKey.BootstrapLocale_Jp] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Jp),
-			[SheetKey.BootstrapLocale_En] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_En),
-			[SheetKey.ErrorMsgLocale_Ko] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Ko),
-			[SheetKey.ErrorMsgLocale_Jp] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Jp),
-			[SheetKey.ErrorMsgLocale_En] = static l => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_En),
+			[SheetKey.BootstrapLocaleKeyHash] = static (l, scope) => l.LoadSheetAsync<BootstrapLocaleKeyRoot>(SheetKey.BootstrapLocaleKey, scope),
+			[SheetKey.AudioSettingsHash] = static (l, scope) => l.LoadSheetAsync<AudioSettingsRoot>(SheetKey.AudioSettings, scope),
+			[SheetKey.BootstrapDataHash] = static (l, scope) => l.LoadSheetAsync<BootstrapDataRoot>(SheetKey.BootstrapData, scope),
+			[SheetKey.ErrorCodeHash] = static (l, scope) => l.LoadSheetAsync<ErrorCodeRoot>(SheetKey.ErrorCode, scope),
+			[SheetKey.GraphicsSettingsHash] = static (l, scope) => l.LoadSheetAsync<GraphicsSettingsRoot>(SheetKey.GraphicsSettings, scope),
+			[SheetKey.LocaleSettingsHash] = static (l, scope) => l.LoadSheetAsync<LocaleSettingsRoot>(SheetKey.LocaleSettings, scope),
+			[SheetKey.SceneInfoHash] = static (l, scope) => l.LoadSheetAsync<SceneInfoRoot>(SheetKey.SceneInfo, scope),
+			[SheetKey.SplashEntryInfoHash] = static (l, scope) => l.LoadSheetAsync<SplashEntryInfoRoot>(SheetKey.SplashEntryInfo, scope),
+			[SheetKey.BootHash] = static (l, scope) => l.LoadSheetAsync<BootRoot>(SheetKey.Boot, scope),
+			[SheetKey.BootstrapLocale_KoHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Ko, scope),
+			[SheetKey.BootstrapLocale_JpHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_Jp, scope),
+			[SheetKey.BootstrapLocale_EnHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.BootstrapLocale_En, scope),
+			[SheetKey.ErrorMsgLocale_KoHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Ko, scope),
+			[SheetKey.ErrorMsgLocale_JpHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_Jp, scope),
+			[SheetKey.ErrorMsgLocale_EnHash] = static (l, scope) => l.LoadSheetAsync<LocaleEntryRoot>(SheetKey.ErrorMsgLocale_En, scope),
 		};
 	}
 }

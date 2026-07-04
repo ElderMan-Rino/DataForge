@@ -260,10 +260,12 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "{");
             WriteLine(sb, "\tpublic sealed class GeneratedBlobLoader : IGameDataLoader");
             WriteLine(sb, "\t{");
-            WriteLine(sb, "\t\tpublic UniTask LoadAsync(IDataSheetLoader sheetLoader, string key)");
-            WriteLine(sb, "\t\t\t=> GeneratedBlobRegistry.Registry.TryGetValue(key, out var load)");
+            WriteLine(sb, "\t\tpublic UniTask LoadAsync(IDataSheetLoader sheetLoader, int hash)");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\treturn GeneratedBlobRegistry.Registry.TryGetValue(hash, out var load)");
             WriteLine(sb, "\t\t\t\t? load(sheetLoader)");
-            WriteLine(sb, "\t\t\t\t: throw new KeyNotFoundException(key);");
+            WriteLine(sb, "\t\t\t\t: throw new KeyNotFoundException(hash.ToString()); // [HEAP] error path only");
+            WriteLine(sb, "\t\t}");
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
             return sb.ToString();
@@ -286,12 +288,13 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "{");
             WriteLine(sb, "\tpublic static class GeneratedBlobRegistry");
             WriteLine(sb, "\t{");
-            WriteLine(sb, "\t\tpublic static readonly Dictionary<string, Func<IDataSheetLoader, UniTask>> Registry = new()");
+            WriteLine(sb, "\t\t// [HEAP] 초기화 시 1회 할당");
+            WriteLine(sb, "\t\tpublic static readonly Dictionary<int, Func<IDataSheetLoader, UniTask>> Registry = new()");
             WriteLine(sb, "\t\t{");
             foreach (var sheet in normalSheets)
-                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}] = static l => l.LoadSheetAsync<{sheet.TableName}Root>(SheetKey.{sheet.TableName}),");
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static l => l.LoadSheetAsync<{sheet.TableName}Root>(SheetKey.{sheet.TableName}),");
             foreach (var sheet in languageSheets)
-                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}] = static l => l.LoadSheetAsync<{sheet.DataName}Root>(SheetKey.{sheet.TableName}),");
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static l => l.LoadSheetAsync<{sheet.DataName}Root>(SheetKey.{sheet.TableName}),");
             WriteLine(sb, "\t\t};");
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
@@ -306,15 +309,21 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
                 .Select(s => s.TableName)
                 .ToList();
 
-            int maxLen = keys.Max(k => k.Length);
+            int maxLen     = keys.Max(k => k.Length);
+            int maxHashLen = keys.Max(k => (k + "Hash").Length);
 
             var sb = new StringBuilder();
+            WriteLine(sb, "using Elder.Framework.Common.Utils;");
+            WriteLine(sb, "");
             WriteLine(sb, $"namespace {_targetDataNamespace}");
             WriteLine(sb, "{");
             WriteLine(sb, "\tpublic static class SheetKey");
             WriteLine(sb, "\t{");
             foreach (var key in keys)
-                WriteLine(sb, $"\t\tpublic const string {key.PadRight(maxLen)} = \"{key}\";");
+            {
+                WriteLine(sb, $"\t\tpublic const string          {key.PadRight(maxLen)}     = \"{key}\";");
+                WriteLine(sb, $"\t\tpublic static readonly int   {(key + "Hash").PadRight(maxHashLen)} = StringHashHelper.ToStableHash({key});");
+            }
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
             return sb.ToString();
