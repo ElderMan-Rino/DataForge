@@ -260,10 +260,10 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "{");
             WriteLine(sb, "\tpublic sealed class GeneratedBlobLoader : IGameDataLoader");
             WriteLine(sb, "\t{");
-            WriteLine(sb, "\t\tpublic UniTask LoadAsync(IDataSheetLoader sheetLoader, int hash)");
+            WriteLine(sb, "\t\tpublic UniTask LoadAsync(IDataSheetLoader sheetLoader, int hash, int scope)");
             WriteLine(sb, "\t\t{");
             WriteLine(sb, "\t\t\treturn GeneratedBlobRegistry.Registry.TryGetValue(hash, out var load)");
-            WriteLine(sb, "\t\t\t\t? load(sheetLoader)");
+            WriteLine(sb, "\t\t\t\t? load(sheetLoader, scope)");
             WriteLine(sb, "\t\t\t\t: throw new KeyNotFoundException(hash.ToString()); // [HEAP] error path only");
             WriteLine(sb, "\t\t}");
             WriteLine(sb, "\t}");
@@ -289,12 +289,12 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "\tpublic static class GeneratedBlobRegistry");
             WriteLine(sb, "\t{");
             WriteLine(sb, "\t\t// [HEAP] 초기화 시 1회 할당");
-            WriteLine(sb, "\t\tpublic static readonly Dictionary<int, Func<IDataSheetLoader, UniTask>> Registry = new()");
+            WriteLine(sb, "\t\tpublic static readonly Dictionary<int, Func<IDataSheetLoader, int, UniTask>> Registry = new()");
             WriteLine(sb, "\t\t{");
             foreach (var sheet in normalSheets)
-                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static l => l.LoadSheetAsync<{sheet.TableName}Root>(SheetKey.{sheet.TableName}),");
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static (l, scope) => l.LoadSheetAsync<{sheet.TableName}Root>(SheetKey.{sheet.TableName}, scope),");
             foreach (var sheet in languageSheets)
-                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static l => l.LoadSheetAsync<{sheet.DataName}Root>(SheetKey.{sheet.TableName}),");
+                WriteLine(sb, $"\t\t\t[SheetKey.{sheet.TableName}Hash] = static (l, scope) => l.LoadSheetAsync<{sheet.DataName}Root>(SheetKey.{sheet.TableName}, scope),");
             WriteLine(sb, "\t\t};");
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
