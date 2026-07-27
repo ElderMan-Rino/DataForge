@@ -44,35 +44,57 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             var normalSchemas = schemas.Where(s => !s.IsLanguageSheet).ToList();
 
             // ─── 일반 시트 ────────────────────────────────────────────────────
-            foreach (var schema in normalSchemas)
+            // DataName이 같은 시트끼리 DTO/Row/Baker를 공유 (SharesRowType); Root는 테이블별로 유지 (SharesRootType=false)
+            var normalGroups = normalSchemas
+                .GroupBy(s => string.IsNullOrEmpty(s.DataName) ? s.TableName : s.DataName)
+                .ToList();
+
+            foreach (var group in normalGroups)
             {
-                var dodName = $"{schema.TableName}Row";
-                var dtoName = string.IsNullOrEmpty(schema.DataName)
-                    ? schema.TableName : schema.DataName;
+                var dataName = group.Key;
+                var firstSchema = group.First();
+                var dtoName = dataName;
+                var dodName = $"{dataName}Row";
 
                 // DTO → GameData (DLL 빌드 + MPC -i 분석 대상)
                 generatedFiles.Add(new GeneratedSourceCode(
                     $"{dtoName}.cs",
-                    GenerateModelContent(dtoName, schema.AnalyzedFields),
+                    GenerateModelContent(dtoName, firstSchema.AnalyzedFields),
                     SourceCategory.GameData));        // ← SharedDTO → GameData
 
                 // Row → UnityScripts
                 generatedFiles.Add(new GeneratedSourceCode(
                     $"{dodName}.cs",
-                    GenerateRuntimeContent(dodName, schema.AnalyzedFields),
+                    GenerateRuntimeContent(dodName, firstSchema.AnalyzedFields),
                     SourceCategory.GameData));      // UnityScripts → GameData (DLL 포함)
 
-                generatedFiles.Add(new GeneratedSourceCode(
-                    $"{schema.TableName}Root.cs",
-                    GenerateRootContent(schema.TableName, dodName),
-                    SourceCategory.GameData));      // UnityScripts → GameData (DLL 포함)
+                foreach (var schema in group)
+                {
+                    // Root → UnityScripts (테이블별 blob 로드를 위해 분리 유지)
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{schema.TableName}Root.cs",
+                        GenerateRootContent(schema.TableName, dodName),
+                        SourceCategory.GameData));      // UnityScripts → GameData (DLL 포함)
+                }
 
                 // Baker → EditorScripts
-                generatedFiles.Add(new GeneratedSourceCode(
-                    $"{schema.TableName}Baker.cs",
-                    GenerateBakerContent(schema.TableName, dtoName, dodName,
-                        schema.AnalyzedFields),
-                    SourceCategory.EditorScripts));
+                if (group.Count() == 1)
+                {
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{firstSchema.TableName}Baker.cs",
+                        GenerateBakerContent(firstSchema.TableName, dtoName, dodName,
+                            firstSchema.AnalyzedFields),
+                        SourceCategory.EditorScripts));
+                }
+                else
+                {
+                    var tableNames = group.Select(s => s.TableName).ToList();
+                    var bakerName = $"{dataName}Baker";
+                    generatedFiles.Add(new GeneratedSourceCode(
+                        $"{bakerName}.cs",
+                        GenerateGroupedBakerContent(bakerName, dtoName, tableNames, firstSchema.AnalyzedFields),
+                        SourceCategory.EditorScripts));
+                }
             }
 
             // ─── 언어 시트 ────────────────────────────────────────────────────
@@ -253,7 +275,7 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
 
             var sb = new StringBuilder();
             WriteLine(sb, "using Cysharp.Threading.Tasks;");
-            WriteLine(sb, "using Elder.Framework.Data.Interfaces;");
+            WriteLine(sb, "using Elder.Framework.Blob.Interfaces;");
             WriteLine(sb, "using System.Collections.Generic;");
             WriteLine(sb, "");
             WriteLine(sb, $"namespace {_targetDataNamespace}");
@@ -280,7 +302,7 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
 
             var sb = new StringBuilder();
             WriteLine(sb, "using Cysharp.Threading.Tasks;");
-            WriteLine(sb, "using Elder.Framework.Data.Interfaces;");
+            WriteLine(sb, "using Elder.Framework.Blob.Interfaces;");
             WriteLine(sb, "using System;");
             WriteLine(sb, "using System.Collections.Generic;");
             WriteLine(sb, "");
@@ -481,6 +503,118 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, "\t\t\twriter.Dispose();");
             WriteLine(sb, "\t\t\tblobRef.Dispose();");
             WriteLine(sb, "\t\t}");
+            WriteLine(sb, "\t}");
+            WriteLine(sb, "}");
+            WriteLine(sb, "#endif");
+            return sb.ToString();
+        }
+
+        private string GenerateGroupedBakerContent(string bakerName, string dtoName, List<string> tableNames, List<AnalyzedField> fields)
+        {
+            _targetDataNamespace = Settings.Default.RootNamespace;
+
+            var orderedByKey = fields.OrderBy(f => f.KeyIndex).ToList();
+            var ctorArgList = string.Join(", ", orderedByKey.Select(f =>
+            {
+                string baseType = f.ManagedType.Replace("List<", "").Replace(">", "");
+                if (f.IsList)
+                {
+                    string elemConvert = baseType switch
+                    {
+                        "int"    => "System.Convert.ToInt32(x)",
+                        "long"   => "System.Convert.ToInt64(x)",
+                        "float"  => "System.Convert.ToSingle(x)",
+                        "bool"   => "System.Convert.ToBoolean(x)",
+                        "string" => "x?.ToString() ?? string.Empty",
+                        _        => $"({baseType})System.Convert.ToInt32(x)"
+                    };
+                    return $"((System.Collections.IEnumerable)row[{f.KeyIndex}]).Cast<object>().Select(x => {elemConvert}).ToList()";
+                }
+                return baseType switch
+                {
+                    "int"    => $"System.Convert.ToInt32(row[{f.KeyIndex}])",
+                    "long"   => $"System.Convert.ToInt64(row[{f.KeyIndex}])",
+                    "float"  => $"System.Convert.ToSingle(row[{f.KeyIndex}])",
+                    "bool"   => $"System.Convert.ToBoolean(row[{f.KeyIndex}])",
+                    "string" => $"row[{f.KeyIndex}]?.ToString() ?? string.Empty",
+                    _        => $"({baseType})System.Convert.ToInt32(row[{f.KeyIndex}])"
+                };
+            }));
+
+            var sb = new StringBuilder();
+            WriteLine(sb, "#if UNITY_EDITOR");
+            WriteLine(sb, "using Elder.Framework.Crypto;");
+            WriteLine(sb, "using MessagePack;");
+            WriteLine(sb, "using MessagePack.Resolvers;");
+            WriteLine(sb, "using System.Collections.Generic;");
+            WriteLine(sb, "using System.IO;");
+            WriteLine(sb, "using System.Linq;");
+            WriteLine(sb, "using System.Runtime.InteropServices;");
+            WriteLine(sb, "using Unity.Collections;");
+            WriteLine(sb, "using Unity.Entities;");
+            WriteLine(sb, "using Unity.Entities.Serialization;");
+            WriteLine(sb, "");
+            WriteLine(sb, $"namespace {_targetDataNamespace}");
+            WriteLine(sb, "{");
+            WriteLine(sb, $"\tpublic static class {bakerName}");
+            WriteLine(sb, "\t{");
+
+            WriteLine(sb, $"\t\tprivate static List<{dtoName}> ParseDto(string sourcePath)");
+            WriteLine(sb, "\t\t{");
+            WriteLine(sb, "\t\t\tvar rawBytes = File.ReadAllBytes(sourcePath);");
+            WriteLine(sb, "\t\t\tvar options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);");
+            WriteLine(sb, "\t\t\tvar rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);");
+            WriteLine(sb, $"\t\t\treturn rawList.Select(row => new {dtoName}({ctorArgList})).ToList();");
+            WriteLine(sb, "\t\t}");
+            WriteLine(sb, "");
+
+            foreach (var tableName in tableNames)
+            {
+                WriteLine(sb, $"\t\tpublic static void Bake_{tableName}(string sourcePath, string savePath, byte[] encryptionKeyPartB)");
+                WriteLine(sb, "\t\t{");
+                WriteLine(sb, "\t\t\tvar dtoList = ParseDto(sourcePath);");
+                WriteLine(sb, "");
+                WriteLine(sb, "\t\t\tvar builder = new BlobBuilder(Allocator.Temp);");
+                WriteLine(sb, $"\t\t\tref {tableName}Root root = ref builder.ConstructRoot<{tableName}Root>();");
+                WriteLine(sb, "\t\t\tvar arrayBuilder = builder.Allocate(ref root.Rows, dtoList.Count);");
+                WriteLine(sb, "");
+                WriteLine(sb, "\t\t\tfor (int i = 0; i < dtoList.Count; i++)");
+                WriteLine(sb, "\t\t\t{");
+
+                foreach (var f in fields)
+                {
+                    if (f.UnmanagedType == "BlobString")
+                        WriteLine(sb, $"\t\t\t\tbuilder.AllocateString(ref arrayBuilder[i].{f.Name}, dtoList[i].{f.Name});");
+                    else if (f.IsList)
+                    {
+                        WriteLine(sb, $"\t\t\t\tvar {f.Name}Builder = builder.Allocate(ref arrayBuilder[i].{f.Name}, dtoList[i].{f.Name}.Count);");
+                        WriteLine(sb, $"\t\t\t\tfor (int j = 0; j < dtoList[i].{f.Name}.Count; j++) {f.Name}Builder[j] = dtoList[i].{f.Name}[j];");
+                    }
+                    else
+                        WriteLine(sb, $"\t\t\t\tarrayBuilder[i].{f.Name} = dtoList[i].{f.Name};");
+                }
+
+                WriteLine(sb, "\t\t\t}");
+                WriteLine(sb, "");
+                WriteLine(sb, $"\t\t\tvar blobRef = builder.CreateBlobAssetReference<{tableName}Root>(Allocator.Temp);");
+                WriteLine(sb, "\t\t\tbuilder.Dispose();");
+                WriteLine(sb, "");
+                WriteLine(sb, "\t\t\tvar writer = new MemoryBinaryWriter();");
+                WriteLine(sb, "\t\t\twriter.Write(blobRef);");
+                WriteLine(sb, "");
+                WriteLine(sb, "\t\t\tunsafe");
+                WriteLine(sb, "\t\t\t{");
+                WriteLine(sb, "\t\t\t\tvar plainBytes = new byte[writer.Length];");
+                WriteLine(sb, "\t\t\t\tMarshal.Copy((System.IntPtr)writer.Data, plainBytes, 0, writer.Length);");
+                WriteLine(sb, "\t\t\t\tElder.SkillTrial.Editor.Crypto.BlobEditorEncryptionHelper.WriteEncrypted(plainBytes, savePath, encryptionKeyPartB);");
+                WriteLine(sb, "\t\t\t}");
+                WriteLine(sb, "");
+                WriteLine(sb, "\t\t\twriter.Dispose();");
+                WriteLine(sb, "\t\t\tblobRef.Dispose();");
+                WriteLine(sb, "\t\t}");
+                WriteLine(sb, "");
+            }
+
             WriteLine(sb, "\t}");
             WriteLine(sb, "}");
             WriteLine(sb, "#endif");

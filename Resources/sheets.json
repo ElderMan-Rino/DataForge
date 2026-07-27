@@ -101,6 +101,12 @@
       "dataName": "",
       "isLanguageSheet": false,
       "isActive": true
+    },
+    {
+      "tableName": "AssetInfoEntryPreload",
+      "dataName": "AssetInfoEntry",
+      "isLanguageSheet": false,
+      "isActive": true
     }
   ]
 }

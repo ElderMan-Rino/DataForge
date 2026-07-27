@@ -3,7 +3,7 @@ using Unity.Entities;
 namespace Elder.SkillTrial.Resources.Data
 {
 	[BurstCompile]
-	public struct BootRoot
+	public struct AssetInfoEntryPreloadRoot
 	{
 		public BlobArray<AssetInfoEntryRow> Rows;
 	}

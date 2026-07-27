@@ -5,7 +5,7 @@ using Unity.Entities;
 namespace Elder.SkillTrial.Resources.Data
 {
 	[BurstCompile]
-	public struct AssetInfoEntryBootRow
+	public struct AssetInfoEntryPreloadRow
 	{
 		public BlobString Label;
 		public int Id;

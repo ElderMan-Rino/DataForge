@@ -5,6 +5,6 @@ namespace Elder.SkillTrial.Resources.Data
 	[BurstCompile]
 	public struct AssetInfoEntryBootRoot
 	{
-		public BlobArray<AssetInfoEntryBootRow> Rows;
+		public BlobArray<AssetInfoEntryRow> Rows;
 	}
 }
