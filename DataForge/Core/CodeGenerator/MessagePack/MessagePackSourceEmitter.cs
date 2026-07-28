@@ -382,9 +382,8 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             _targetDataNamespace = Settings.Default.RootNamespace;
 
             var sb = new StringBuilder();
-            WriteLine(sb, "using System;\nusing Unity.Burst;\nusing Unity.Entities;\n");
+            WriteLine(sb, "using System;\nusing Unity.Entities;\n");
             WriteLine(sb, $"namespace {_targetDataNamespace}\n{{");
-            WriteLine(sb, "\t[BurstCompile]");
             WriteLine(sb, $"\tpublic struct {name}\n\t{{");
 
             foreach (var f in fields.OrderByDescending(f => f.TotalSize))
@@ -399,10 +398,8 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             _targetDataNamespace = Settings.Default.RootNamespace;
 
             var sb = new StringBuilder();
-            WriteLine(sb, "using Unity.Burst;");
             WriteLine(sb, "using Unity.Entities;");
             WriteLine(sb, $"namespace {_targetDataNamespace}\n{{");
-            WriteLine(sb, "\t[BurstCompile]");
             WriteLine(sb, $"\tpublic struct {tableName}Root\n\t{{");
             WriteLine(sb, $"\t\tpublic BlobArray<{dodName}> Rows;");
             WriteLine(sb, "\t}\n}");
