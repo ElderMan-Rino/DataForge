@@ -694,12 +694,15 @@ namespace Elder.DataForge.Core.CodeGenerator.MessagePack
             WriteLine(sb, $"\tpublic enum {schema.EnumName}");
             WriteLine(sb, "\t{");
 
-            foreach (var entry in schema.Entries)
+            for (var i = 0; i < schema.Entries.Count; i++)
             {
+                var entry = schema.Entries[i];
+
                 if (!string.IsNullOrEmpty(entry.Desc))
                     WriteLine(sb, $"\t\t/// <summary>{entry.Desc}</summary>");
 
-                WriteLine(sb, $"\t\t{entry.Name} = {entry.Value},");
+                var value = schema.EnumType == EnumType.Flag ? 1 << i : entry.Value;
+                WriteLine(sb, $"\t\t{entry.Name} = {value},");
             }
 
             WriteLine(sb, "\t}");
