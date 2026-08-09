@@ -19,7 +19,7 @@ namespace Elder.SkillTrial.Resources.Data
 			var rawBytes = File.ReadAllBytes(sourcePath);
 			var options = MessagePackSerializerOptions.Standard.WithResolver(StandardResolver.Instance);
 			var rawList = MessagePackSerializer.Deserialize<List<object[]>>(rawBytes, options);
-			var dtoList = rawList.Select(row => new ErrorCode(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (ErrorCategory)System.Convert.ToInt32(row[3]), (ErrorActionType)System.Convert.ToInt32(row[4]))).ToList();
+			var dtoList = rawList.Select(row => new ErrorCode(row[0]?.ToString() ?? string.Empty, row[1]?.ToString() ?? string.Empty, System.Convert.ToInt32(row[2]), (ErrorCategory)System.Convert.ToInt32(row[3]), (ErrorActionType)System.Convert.ToInt32(row[4]), (ErrorActionType)System.Convert.ToInt32(row[5]), (ButtonType)System.Convert.ToInt32(row[6]), (DismissPolicy)System.Convert.ToInt32(row[7]))).ToList();
 
 			var builder = new BlobBuilder(Allocator.Temp);
 			ref ErrorCodeRoot root = ref builder.ConstructRoot<ErrorCodeRoot>();
@@ -31,7 +31,10 @@ namespace Elder.SkillTrial.Resources.Data
 				builder.AllocateString(ref arrayBuilder[i].LocaleKey, dtoList[i].LocaleKey);
 				arrayBuilder[i].Id = dtoList[i].Id;
 				arrayBuilder[i].Category = dtoList[i].Category;
-				arrayBuilder[i].Action = dtoList[i].Action;
+				arrayBuilder[i].OkAction = dtoList[i].OkAction;
+				arrayBuilder[i].CancelAction = dtoList[i].CancelAction;
+				arrayBuilder[i].ButtonType = dtoList[i].ButtonType;
+				arrayBuilder[i].DismissPolicy = dtoList[i].DismissPolicy;
 			}
 
 			var blobRef = builder.CreateBlobAssetReference<ErrorCodeRoot>(Allocator.Temp);

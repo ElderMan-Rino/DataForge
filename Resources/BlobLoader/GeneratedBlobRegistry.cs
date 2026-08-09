@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using Elder.Framework.Data.Interfaces;
+using Elder.Framework.Blob.Interfaces;
 using System;
 using System.Collections.Generic;
 

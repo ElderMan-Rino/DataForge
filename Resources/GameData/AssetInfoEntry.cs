@@ -9,14 +9,12 @@ namespace Elder.SkillTrial.Resources.Data
 	{
 		[Key(0)] public readonly string Label;
 		[Key(1)] public readonly int Id;
-		[Key(2)] public readonly AssetType AssetType;
 
 		[SerializationConstructor]
-		public AssetInfoEntry(string label, int id, AssetType assetType)
+		public AssetInfoEntry(string label, int id)
 		{
 			this.Label = label;
 			this.Id = id;
-			this.AssetType = assetType;
 		}
 	}
 }

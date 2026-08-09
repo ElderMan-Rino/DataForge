@@ -1,10 +1,8 @@
 ﻿using System;
-using Unity.Burst;
 using Unity.Entities;
 
 namespace Elder.SkillTrial.Resources.Data
 {
-	[BurstCompile]
 	public struct GraphicsSettingsRow
 	{
 		public int Id;

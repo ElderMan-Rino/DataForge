@@ -125,10 +125,9 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.AssetInfoEntry value, global::MessagePack.MessagePackSerializerOptions options)
         {
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
-            writer.WriteArrayHeader(3);
+            writer.WriteArrayHeader(2);
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Label, options);
             writer.Write(value.Id);
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<AssetType>(formatterResolver).Serialize(ref writer, value.AssetType, options);
         }
 
         public global::Elder.SkillTrial.Resources.Data.AssetInfoEntry Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -143,7 +142,6 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
             var length = reader.ReadArrayHeader();
             var __Label__ = default(string);
             var __Id__ = default(int);
-            var __AssetType__ = default(AssetType);
 
             for (int i = 0; i < length; i++)
             {
@@ -155,16 +153,13 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
                     case 1:
                         __Id__ = reader.ReadInt32();
                         break;
-                    case 2:
-                        __AssetType__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<AssetType>(formatterResolver).Deserialize(ref reader, options);
-                        break;
                     default:
                         reader.Skip();
                         break;
                 }
             }
 
-            var ____result = new global::Elder.SkillTrial.Resources.Data.AssetInfoEntry(__Label__, __Id__, __AssetType__);
+            var ____result = new global::Elder.SkillTrial.Resources.Data.AssetInfoEntry(__Label__, __Id__);
             reader.Depth--;
             return ____result;
         }
@@ -398,12 +393,15 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Elder.SkillTrial.Resources.Data.ErrorCode value, global::MessagePack.MessagePackSerializerOptions options)
         {
             global::MessagePack.IFormatterResolver formatterResolver = options.Resolver;
-            writer.WriteArrayHeader(5);
+            writer.WriteArrayHeader(8);
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Key, options);
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.LocaleKey, options);
             writer.Write(value.Id);
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorCategory>(formatterResolver).Serialize(ref writer, value.Category, options);
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Serialize(ref writer, value.Action, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Serialize(ref writer, value.OkAction, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Serialize(ref writer, value.CancelAction, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ButtonType>(formatterResolver).Serialize(ref writer, value.ButtonType, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<DismissPolicy>(formatterResolver).Serialize(ref writer, value.DismissPolicy, options);
         }
 
         public global::Elder.SkillTrial.Resources.Data.ErrorCode Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -420,7 +418,10 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
             var __LocaleKey__ = default(string);
             var __Id__ = default(int);
             var __Category__ = default(ErrorCategory);
-            var __Action__ = default(ErrorActionType);
+            var __OkAction__ = default(ErrorActionType);
+            var __CancelAction__ = default(ErrorActionType);
+            var __ButtonType__ = default(ButtonType);
+            var __DismissPolicy__ = default(DismissPolicy);
 
             for (int i = 0; i < length; i++)
             {
@@ -439,7 +440,16 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
                         __Category__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorCategory>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     case 4:
-                        __Action__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Deserialize(ref reader, options);
+                        __OkAction__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 5:
+                        __CancelAction__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ErrorActionType>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 6:
+                        __ButtonType__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<ButtonType>(formatterResolver).Deserialize(ref reader, options);
+                        break;
+                    case 7:
+                        __DismissPolicy__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<DismissPolicy>(formatterResolver).Deserialize(ref reader, options);
                         break;
                     default:
                         reader.Skip();
@@ -447,7 +457,7 @@ namespace Elder.SkillTrial.Resources.Data.Formatters.Elder.SkillTrial.Resources.
                 }
             }
 
-            var ____result = new global::Elder.SkillTrial.Resources.Data.ErrorCode(__Key__, __LocaleKey__, __Id__, __Category__, __Action__);
+            var ____result = new global::Elder.SkillTrial.Resources.Data.ErrorCode(__Key__, __LocaleKey__, __Id__, __Category__, __OkAction__, __CancelAction__, __ButtonType__, __DismissPolicy__);
             reader.Depth--;
             return ____result;
         }
