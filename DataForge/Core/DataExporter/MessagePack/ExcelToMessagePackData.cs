@@ -89,31 +89,40 @@ namespace Elder.DataForge.Core.DataExporter.MessagePack
                     var schema = schemas[i];
                     UpdateProgressLevel($"Syncing & Exporting Table: {schema.TableName} ({i + 1}/{schemas.Count})");
 
-                    var serializedTable = new List<object[]>();
-
-                    foreach (var row in schema.RawRows)
+                    try
                     {
-                        var rowArray = new object[schema.AnalyzedFields.Count];
-                        foreach (var field in schema.AnalyzedFields)
+                        var serializedTable = new List<object[]>();
+
+                        foreach (var row in schema.RawRows)
                         {
-                            object parsedValue = ParseValueBySchema(field, row, enumValueMap);
-                            // 분석기가 정한 KeyIndex 순서대로 배열에 배치 (유니티 [Key(n)]와 일치)
-                            rowArray[field.KeyIndex] = parsedValue;
+                            var rowArray = new object[schema.AnalyzedFields.Count];
+                            foreach (var field in schema.AnalyzedFields)
+                            {
+                                object parsedValue = ParseValueBySchema(field, row, enumValueMap);
+                                // 분석기가 정한 KeyIndex 순서대로 배열에 배치 (유니티 [Key(n)]와 일치)
+                                rowArray[field.KeyIndex] = parsedValue;
+                            }
+                            serializedTable.Add(rowArray);
                         }
-                        serializedTable.Add(rowArray);
+
+                        // 3. MessagePack 직렬화 실행
+                        byte[] bin = MessagePackSerializer.Serialize(serializedTable, options);
+
+                        if (!await _validator.ValidateAsync(bin, schema))
+                        {
+                            UpdateProgressLevel($"Export aborted due to validation failure: {schema.TableName}");
+                            return false;
+                        }
+
+                        await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{schema.TableName}.bytes"), bin);
+                        UpdateProgressValue((float)(i + 1) / schemas.Count * 100f);
                     }
-
-                    // 3. MessagePack 직렬화 실행
-                    byte[] bin = MessagePackSerializer.Serialize(serializedTable, options);
-
-                    if (!await _validator.ValidateAsync(bin, schema))
+                    catch (Exception tableEx)
                     {
-                        UpdateProgressLevel($"Export aborted due to validation failure: {schema.TableName}");
+                        _updateOutputLog.OnNext($"[FAIL] Table '{schema.TableName}' export failed: {tableEx.Message}");
+                        UpdateProgressLevel($"Export Error on Table: {schema.TableName}");
                         return false;
                     }
-
-                    await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{schema.TableName}.bytes"), bin);
-                    UpdateProgressValue((float)(i + 1) / schemas.Count * 100f);
                 }
 
                 UpdateProgressLevel("Data Export Completed Successfully.");
